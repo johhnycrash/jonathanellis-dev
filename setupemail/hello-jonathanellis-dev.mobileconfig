@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>PayloadContent</key>
+  <array>
+    <dict>
+      <key>PayloadType</key><string>com.apple.mail.managed</string>
+      <key>PayloadVersion</key><integer>1</integer>
+      <key>PayloadIdentifier</key><string>dev.jonathanellis.mail.hello-dev</string>
+      <key>PayloadUUID</key><string>7B8F2A4E-3C5D-4B1A-9D8F-1E2A3B4C5D6E</string>
+      <key>PayloadDisplayName</key><string>hello@jonathanellis.dev</string>
+      <key>PayloadDescription</key><string>Configures Mail.app with hello@jonathanellis.dev</string>
+      <key>PayloadOrganization</key><string>Jonathan Ellis</string>
+
+      <key>EmailAccountName</key><string>Jonathan Ellis</string>
+      <key>EmailAccountDescription</key><string>hello@jonathanellis.dev</string>
+      <key>EmailAccountType</key><string>EmailTypeIMAP</string>
+      <key>EmailAddress</key><string>hello@jonathanellis.dev</string>
+
+      <key>IncomingMailServerHostName</key><string>mail.jonathanellis.dev</string>
+      <key>IncomingMailServerPortNumber</key><integer>993</integer>
+      <key>IncomingMailServerUseSSL</key><true/>
+      <key>IncomingMailServerAuthentication</key><string>EmailAuthPassword</string>
+      <key>IncomingMailServerUsername</key><string>hello@jonathanellis.dev</string>
+
+      <key>OutgoingMailServerHostName</key><string>mail.jonathanellis.dev</string>
+      <key>OutgoingMailServerPortNumber</key><integer>587</integer>
+      <key>OutgoingMailServerUseSSL</key><true/>
+      <key>OutgoingMailServerAuthentication</key><string>EmailAuthPassword</string>
+      <key>OutgoingMailServerUsername</key><string>hello@jonathanellis.dev</string>
+      <key>OutgoingPasswordSameAsIncomingPassword</key><true/>
+      <key>SMTPEnableStartTLS</key><true/>
+
+      <key>PreventMove</key><false/>
+      <key>PreventAppSheet</key><false/>
+      <key>disableMailRecentsSyncing</key><false/>
+    </dict>
+  </array>
+
+  <key>PayloadDisplayName</key><string>Jonathan Ellis Mail — hello@jonathanellis.dev</string>
+  <key>PayloadDescription</key><string>Installs hello@jonathanellis.dev with correct IMAP and SMTP settings.</string>
+  <key>PayloadIdentifier</key><string>dev.jonathanellis.mailsetup.hello-dev</string>
+  <key>PayloadOrganization</key><string>Jonathan Ellis</string>
+  <key>PayloadType</key><string>Configuration</string>
+  <key>PayloadUUID</key><string>2F9C6D3A-B8E5-4F7C-AD12-5E3B9A7C1D8F</string>
+  <key>PayloadVersion</key><integer>1</integer>
+  <key>PayloadRemovalDisallowed</key><false/>
+</dict>
+</plist>

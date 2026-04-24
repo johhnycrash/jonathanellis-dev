@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>PayloadContent</key>
+  <array>
+    <dict>
+      <key>PayloadType</key><string>com.apple.mail.managed</string>
+      <key>PayloadVersion</key><integer>1</integer>
+      <key>PayloadIdentifier</key><string>dev.jonathanellis.mail.accounts-dev</string>
+      <key>PayloadUUID</key><string>A1B2C3D4-E5F6-7890-ABCD-EF1234567890</string>
+      <key>PayloadDisplayName</key><string>accounts@jonathanellis.dev</string>
+      <key>PayloadDescription</key><string>Configures Mail.app with accounts@jonathanellis.dev</string>
+      <key>PayloadOrganization</key><string>Jonathan Ellis</string>
+
+      <key>EmailAccountName</key><string>Jonathan Ellis — Accounts</string>
+      <key>EmailAccountDescription</key><string>accounts@jonathanellis.dev</string>
+      <key>EmailAccountType</key><string>EmailTypeIMAP</string>
+      <key>EmailAddress</key><string>accounts@jonathanellis.dev</string>
+
+      <key>IncomingMailServerHostName</key><string>mail.jonathanellis.dev</string>
+      <key>IncomingMailServerPortNumber</key><integer>993</integer>
+      <key>IncomingMailServerUseSSL</key><true/>
+      <key>IncomingMailServerAuthentication</key><string>EmailAuthPassword</string>
+      <key>IncomingMailServerUsername</key><string>accounts@jonathanellis.dev</string>
+
+      <key>OutgoingMailServerHostName</key><string>mail.jonathanellis.dev</string>
+      <key>OutgoingMailServerPortNumber</key><integer>587</integer>
+      <key>OutgoingMailServerUseSSL</key><true/>
+      <key>OutgoingMailServerAuthentication</key><string>EmailAuthPassword</string>
+      <key>OutgoingMailServerUsername</key><string>accounts@jonathanellis.dev</string>
+      <key>OutgoingPasswordSameAsIncomingPassword</key><true/>
+      <key>SMTPEnableStartTLS</key><true/>
+
+      <key>PreventMove</key><false/>
+      <key>PreventAppSheet</key><false/>
+      <key>disableMailRecentsSyncing</key><false/>
+    </dict>
+  </array>
+
+  <key>PayloadDisplayName</key><string>Jonathan Ellis Mail — accounts@jonathanellis.dev</string>
+  <key>PayloadDescription</key><string>Installs accounts@jonathanellis.dev with correct IMAP and SMTP settings.</string>
+  <key>PayloadIdentifier</key><string>dev.jonathanellis.mailsetup.accounts-dev</string>
+  <key>PayloadOrganization</key><string>Jonathan Ellis</string>
+  <key>PayloadType</key><string>Configuration</string>
+  <key>PayloadUUID</key><string>B2C3D4E5-F6A7-8901-BCDE-F23456789012</string>
+  <key>PayloadVersion</key><integer>1</integer>
+  <key>PayloadRemovalDisallowed</key><false/>
+</dict>
+</plist>
