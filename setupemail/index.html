@@ -349,7 +349,7 @@
 
   <div class="tab-content active" id="tab-imap">
     <div class="detail-box">
-      <div class="detail-row"><div class="key">Server</div><div class="val">mail.jonathanellis.dev</div></div>
+      <div class="detail-row"><div class="key">Server</div><div class="val">mail.jonathanellis.dev <span style="color:var(--muted);font-size:11px;">(or mail.jonathanellis.ca for .ca accounts)</span></div></div>
       <div class="detail-row"><div class="key">Port</div><div class="val">993</div></div>
       <div class="detail-row"><div class="key">Encryption</div><div class="val">SSL / TLS</div></div>
       <div class="detail-row"><div class="key">Authentication</div><div class="val">Password</div></div>
@@ -360,7 +360,7 @@
 
   <div class="tab-content" id="tab-smtp">
     <div class="detail-box">
-      <div class="detail-row"><div class="key">Server</div><div class="val">mail.jonathanellis.dev</div></div>
+      <div class="detail-row"><div class="key">Server</div><div class="val">mail.jonathanellis.dev <span style="color:var(--muted);font-size:11px;">(or mail.jonathanellis.ca for .ca accounts)</span></div></div>
       <div class="detail-row"><div class="key">Port</div><div class="val">587</div></div>
       <div class="detail-row"><div class="key">Encryption</div><div class="val">STARTTLS (Use SSL: ON)</div></div>
       <div class="detail-row"><div class="key">Authentication</div><div class="val">Password</div></div>
@@ -370,7 +370,7 @@
   </div>
 
   <div class="note">
-    <strong>Important:</strong> the email address can be <code>@jonathanellis.dev</code> or <code>@jonathanellis.ca</code>, but the IMAP/SMTP <strong>server is always <code>mail.jonathanellis.dev</code></strong>. The cert covers both domains so there's no warning either way.
+    <strong>Server hostname:</strong> use <code>mail.jonathanellis.dev</code> for <code>@jonathanellis.dev</code> addresses, and <code>mail.jonathanellis.ca</code> for <code>@jonathanellis.ca</code> addresses. The cert covers both, and DNS points both at the same server, so either works — but matching the domain to the hostname keeps things tidy.
   </div>
 
   <h2>Trouble <em>connecting</em>?</h2>

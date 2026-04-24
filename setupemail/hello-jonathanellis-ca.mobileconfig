@@ -18,13 +18,13 @@
       <key>EmailAccountType</key><string>EmailTypeIMAP</string>
       <key>EmailAddress</key><string>hello@jonathanellis.ca</string>
 
-      <key>IncomingMailServerHostName</key><string>mail.jonathanellis.dev</string>
+      <key>IncomingMailServerHostName</key><string>mail.jonathanellis.ca</string>
       <key>IncomingMailServerPortNumber</key><integer>993</integer>
       <key>IncomingMailServerUseSSL</key><true/>
       <key>IncomingMailServerAuthentication</key><string>EmailAuthPassword</string>
       <key>IncomingMailServerUsername</key><string>hello@jonathanellis.ca</string>
 
-      <key>OutgoingMailServerHostName</key><string>mail.jonathanellis.dev</string>
+      <key>OutgoingMailServerHostName</key><string>mail.jonathanellis.ca</string>
       <key>OutgoingMailServerPortNumber</key><integer>587</integer>
       <key>OutgoingMailServerUseSSL</key><true/>
       <key>OutgoingMailServerAuthentication</key><string>EmailAuthPassword</string>
@@ -39,7 +39,7 @@
   </array>
 
   <key>PayloadDisplayName</key><string>Jonathan Ellis Mail — hello@jonathanellis.ca</string>
-  <key>PayloadDescription</key><string>Installs hello@jonathanellis.ca with correct IMAP and SMTP settings (server: mail.jonathanellis.dev).</string>
+  <key>PayloadDescription</key><string>Installs hello@jonathanellis.ca with correct IMAP and SMTP settings (server: mail.jonathanellis.ca).</string>
   <key>PayloadIdentifier</key><string>dev.jonathanellis.mailsetup.hello-ca</string>
   <key>PayloadOrganization</key><string>Jonathan Ellis</string>
   <key>PayloadType</key><string>Configuration</string>
