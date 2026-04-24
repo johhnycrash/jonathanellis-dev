@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jonathan Ellis</title>
+<meta name="description" content="Jonathan Ellis — Design Leader.">
+<link rel="icon" type="image/svg+xml" href="/public/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,400;0,500;1,500&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green: #00ff40;
+    --charcoal: #25272b;
+    --ink: #0c0d0f;
+    --bone: #efefef;
+    --muted: rgba(239, 239, 239, 0.55);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    height: 100%;
+    background: var(--ink);
+    color: var(--bone);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-weight: 300;
+    overflow: hidden;
+  }
+  #stage {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+  }
+  #stage canvas { display: block; width: 100%; height: 100%; }
+  .overlay {
+    position: relative;
+    z-index: 2;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    padding: 32px 48px;
+    pointer-events: none;
+  }
+  .overlay > * { pointer-events: auto; }
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  header .brand {
+    color: var(--bone);
+    letter-spacing: 0.2em;
+  }
+  header .brand span {
+    color: var(--green);
+  }
+  main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    padding-bottom: 40px;
+    gap: 24px;
+  }
+  .tagline {
+    font-family: 'Cormorant', Georgia, serif;
+    font-size: clamp(28px, 3.2vw, 44px);
+    font-weight: 500;
+    font-style: italic;
+    text-align: center;
+    color: var(--bone);
+    max-width: 640px;
+    line-height: 1.25;
+    opacity: 0;
+    transform: translateY(20px);
+    animation: rise 1.4s 0.4s ease-out forwards;
+  }
+  .tagline em {
+    color: var(--green);
+    font-style: normal;
+    font-family: 'Inter', sans-serif;
+    font-weight: 500;
+    font-size: 0.7em;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 0.8em;
+    opacity: 0.6;
+  }
+  .cta-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: center;
+    opacity: 0;
+    animation: rise 1.4s 0.8s ease-out forwards;
+  }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 22px;
+    border: 1px solid rgba(239, 239, 239, 0.18);
+    border-radius: 999px;
+    color: var(--bone);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    background: rgba(239, 239, 239, 0.02);
+    transition: all 0.3s ease;
+    backdrop-filter: blur(6px);
+  }
+  .btn:hover {
+    border-color: var(--green);
+    color: var(--green);
+    transform: translateY(-2px);
+  }
+  .btn .arrow {
+    transition: transform 0.3s ease;
+  }
+  .btn:hover .arrow { transform: translateX(3px); }
+  footer {
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    color: var(--muted);
+    text-transform: uppercase;
+    text-align: center;
+    padding-top: 24px;
+  }
+  @keyframes rise {
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @media (max-width: 640px) {
+    .overlay { padding: 24px 20px; }
+    header { font-size: 11px; }
+  }
+</style>
+</head>
+<body>
+<div id="stage"></div>
+<div class="overlay">
+  <header>
+    <div class="brand">Jonathan Ellis<span>.</span>Dev</div>
+    <div>Made in Canada</div>
+  </header>
+  <main>
+    <p class="tagline">
+      <em>Designer · Builder · Systems thinker</em>
+      Shipping thoughtful software,<br>brand, and the occasional coffee conversation.
+    </p>
+    <div class="cta-row">
+      <a class="btn" href="https://jonathanellis.work">Work with me <span class="arrow">→</span></a>
+      <a class="btn" href="https://jonathanellis.ca">Portfolio <span class="arrow">→</span></a>
+      <a class="btn" href="https://calendly.com/jonathanellis">Book a coffee <span class="arrow">→</span></a>
+      <a class="btn" href="https://rustdesk.jonathanellis.dev">RustDesk install <span class="arrow">→</span></a>
+    </div>
+  </main>
+  <footer>© 2026 Jonathan Ellis · jonathanellis.dev</footer>
+</div>
+
+<!-- Three.js + GSAP for the metallic floating J -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script>
+/**
+ * MetallicJ — a 3D extruded version of the J logo that floats and shimmers.
+ * Goal: OddCommon-ish vibe; metallic green envMap reflects the scene,
+ * gentle float via GSAP, shimmer intensifies on hover.
+ *
+ * TODO (Claude Code iteration ideas):
+ * - Replace placeholder cube/torus geometry with an actual extruded J SVGPath
+ *   (three.js SVGLoader → extrude geometry) for a true 3D version of the logo.
+ * - Load an HDR environment (PMREM) for proper reflective metal.
+ * - Post-processing bloom pass for the neon glow.
+ */
+const stage = document.getElementById('stage');
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+camera.position.set(0, 0, 5);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.outputEncoding = THREE.sRGBEncoding;
+stage.appendChild(renderer.domElement);
+
+// Environment: procedural gradient as cubemap surrogate (placeholder — upgrade to HDR later)
+scene.background = null;
+const cubeRT = new THREE.WebGLCubeRenderTarget(256);
+const cubeCam = new THREE.CubeCamera(0.1, 10, cubeRT);
+scene.add(cubeCam);
+
+// Lights
+scene.add(new THREE.AmbientLight(0x1a1a1a, 1));
+const keyLight = new THREE.PointLight(0x00ff40, 2, 50);
+keyLight.position.set(3, 2, 3);
+scene.add(keyLight);
+const fillLight = new THREE.PointLight(0xffffff, 1, 50);
+fillLight.position.set(-3, -2, 2);
+scene.add(fillLight);
+const rimLight = new THREE.PointLight(0x66ff99, 1.5, 50);
+rimLight.position.set(0, 3, -3);
+scene.add(rimLight);
+
+// Placeholder J form — torus knot gives a metallic "chunky letter" feel until we wire SVG extrusion
+const logoGroup = new THREE.Group();
+const material = new THREE.MeshPhysicalMaterial({
+  color: 0x00ff40,
+  metalness: 1.0,
+  roughness: 0.15,
+  clearcoat: 0.8,
+  clearcoatRoughness: 0.1,
+  envMap: cubeRT.texture,
+  envMapIntensity: 1.5,
+  emissive: 0x003311,
+  emissiveIntensity: 0.4,
+});
+// A composite "J-like" form: vertical bar + base hook using two beveled boxes
+const barGeom = new THREE.BoxGeometry(0.5, 2.4, 0.4, 4, 16, 4);
+const bar = new THREE.Mesh(barGeom, material);
+bar.position.set(0.4, 0.2, 0);
+logoGroup.add(bar);
+
+const hookGeom = new THREE.TorusGeometry(0.6, 0.22, 16, 64, Math.PI);
+const hook = new THREE.Mesh(hookGeom, material);
+hook.rotation.z = Math.PI;
+hook.position.set(-0.2, -1.0, 0);
+logoGroup.add(hook);
+
+const crossGeom = new THREE.BoxGeometry(1.2, 0.25, 0.4, 4, 4, 4);
+const cross = new THREE.Mesh(crossGeom, material);
+cross.position.set(0.4, 1.5, 0);
+logoGroup.add(cross);
+
+scene.add(logoGroup);
+
+// Float animation
+gsap.to(logoGroup.position, { y: 0.15, duration: 2.8, yoyo: true, repeat: -1, ease: 'sine.inOut' });
+gsap.to(logoGroup.rotation, { y: Math.PI * 2, duration: 28, repeat: -1, ease: 'none' });
+gsap.to(logoGroup.rotation, { x: 0.08, duration: 4.2, yoyo: true, repeat: -1, ease: 'sine.inOut' });
+
+// Hover shimmer: swap roughness and emissive intensity
+let hovering = false;
+stage.addEventListener('pointermove', (e) => {
+  const nx = (e.clientX / window.innerWidth) * 2 - 1;
+  const ny = -(e.clientY / window.innerHeight) * 2 + 1;
+  gsap.to(logoGroup.rotation, { y: logoGroup.rotation.y + nx * 0.15, x: ny * 0.25, duration: 1.2, ease: 'power2.out', overwrite: 'auto' });
+});
+stage.addEventListener('pointerenter', () => {
+  hovering = true;
+  gsap.to(material, { roughness: 0.05, emissiveIntensity: 0.9, envMapIntensity: 2.2, duration: 0.6 });
+});
+stage.addEventListener('pointerleave', () => {
+  hovering = false;
+  gsap.to(material, { roughness: 0.15, emissiveIntensity: 0.4, envMapIntensity: 1.5, duration: 1 });
+});
+
+// Responsive
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// Render loop
+function tick() {
+  logoGroup.visible = false;
+  cubeCam.update(renderer, scene);
+  logoGroup.visible = true;
+  renderer.render(scene, camera);
+  requestAnimationFrame(tick);
+}
+tick();
+</script>
+</body>
+</html>
