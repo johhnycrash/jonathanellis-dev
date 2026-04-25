@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>PayloadContent</key>
+  <array>
+    <dict>
+      <key>PayloadType</key><string>com.apple.mail.managed</string>
+      <key>PayloadVersion</key><integer>1</integer>
+      <key>PayloadIdentifier</key><string>ca.teamabsolute.mail.pay</string>
+      <key>PayloadUUID</key><string>E5F6A1B2-C3D4-5678-E5F6-A1B2C3D45678</string>
+      <key>PayloadDisplayName</key><string>pay@teamabsolute.ca</string>
+      <key>PayloadDescription</key><string>Configures Mail.app with pay@teamabsolute.ca</string>
+      <key>PayloadOrganization</key><string>Team Absolute</string>
+
+      <key>EmailAccountName</key><string>Team Absolute Payments</string>
+      <key>EmailAccountDescription</key><string>pay@teamabsolute.ca</string>
+      <key>EmailAccountType</key><string>EmailTypeIMAP</string>
+      <key>EmailAddress</key><string>pay@teamabsolute.ca</string>
+
+      <key>IncomingMailServerHostName</key><string>mail.teamabsolute.ca</string>
+      <key>IncomingMailServerPortNumber</key><integer>993</integer>
+      <key>IncomingMailServerUseSSL</key><true/>
+      <key>IncomingMailServerAuthentication</key><string>EmailAuthPassword</string>
+      <key>IncomingMailServerUsername</key><string>pay@teamabsolute.ca</string>
+
+      <key>OutgoingMailServerHostName</key><string>mail.teamabsolute.ca</string>
+      <key>OutgoingMailServerPortNumber</key><integer>587</integer>
+      <key>OutgoingMailServerUseSSL</key><true/>
+      <key>OutgoingMailServerAuthentication</key><string>EmailAuthPassword</string>
+      <key>OutgoingMailServerUsername</key><string>pay@teamabsolute.ca</string>
+      <key>OutgoingPasswordSameAsIncomingPassword</key><true/>
+      <key>SMTPEnableStartTLS</key><true/>
+
+      <key>PreventMove</key><false/>
+      <key>PreventAppSheet</key><false/>
+      <key>disableMailRecentsSyncing</key><false/>
+    </dict>
+  </array>
+
+  <key>PayloadDisplayName</key><string>Team Absolute Mail — pay@teamabsolute.ca</string>
+  <key>PayloadDescription</key><string>Installs pay@teamabsolute.ca with correct IMAP and SMTP settings (server: mail.teamabsolute.ca).</string>
+  <key>PayloadIdentifier</key><string>ca.teamabsolute.mailsetup.pay</string>
+  <key>PayloadOrganization</key><string>Team Absolute</string>
+  <key>PayloadType</key><string>Configuration</string>
+  <key>PayloadUUID</key><string>F6A1B2C3-D4E5-6789-F6A1-B2C3D4E56789</string>
+  <key>PayloadVersion</key><integer>1</integer>
+  <key>PayloadRemovalDisallowed</key><false/>
+</dict>
+</plist>

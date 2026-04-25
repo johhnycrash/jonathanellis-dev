@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>teamabsolute.ca DNS migration — Jonathan Ellis</title>
+<meta name="robots" content="noindex,nofollow">
+<link rel="icon" type="image/svg+xml" href="/public/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,400;0,500;1,500&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --bg-2: #111;
+    --card: #161616;
+    --card-2: #1c1c1c;
+    --line: #2a2a2a;
+    --bone: #f0ece4;
+    --bone-dim: #c0bcb4;
+    --muted: #777;
+    --green: #00ff64;
+    --red: #ff4d4d;
+    --amber: #ffb84d;
+    --blue: #4dd0ff;
+    --grey-keep: #6f6f6f;
+    --mono: 'JetBrains Mono', ui-monospace, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { background: var(--bg); color: var(--bone); font-family: 'Inter', sans-serif; margin: 0; }
+  body { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
+  @media (max-width: 800px) { body { grid-template-columns: 1fr; } aside { position: static !important; height: auto !important; border-right: none !important; border-bottom: 1px solid var(--line); } }
+
+  /* Sidebar */
+  aside {
+    position: sticky; top: 0; height: 100vh;
+    background: var(--bg-2);
+    border-right: 1px solid var(--line);
+    padding: 28px 22px;
+    overflow-y: auto;
+  }
+  aside .brand {
+    font-family: 'Cormorant', serif;
+    font-size: 20px;
+    color: var(--bone);
+    margin-bottom: 4px;
+    letter-spacing: 0.01em;
+  }
+  aside .brand em { color: var(--green); font-style: italic; font-weight: 500; }
+  aside .sub { font-size: 11px; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 22px; }
+  aside nav a {
+    display: block;
+    color: var(--bone-dim);
+    text-decoration: none;
+    padding: 8px 12px;
+    margin-bottom: 2px;
+    border-radius: 6px;
+    font-size: 13.5px;
+    transition: all 0.15s;
+    border-left: 2px solid transparent;
+  }
+  aside nav a:hover { background: var(--card); color: var(--bone); }
+  aside nav a.delete { color: #ffb3b3; }
+  aside nav a.update { color: #ffd699; }
+  aside nav a.add    { color: #b3ffd1; }
+  aside nav a.keep   { color: var(--bone-dim); }
+  aside nav a:hover.delete { background: rgba(255,77,77,0.08); border-left-color: var(--red); }
+  aside nav a:hover.update { background: rgba(255,184,77,0.08); border-left-color: var(--amber); }
+  aside nav a:hover.add    { background: rgba(0,255,100,0.08); border-left-color: var(--green); }
+  aside nav a:hover.keep   { background: var(--card); border-left-color: var(--grey-keep); }
+  aside .legend { margin-top: 28px; font-size: 11px; color: var(--muted); line-height: 1.6; padding-top: 18px; border-top: 1px solid var(--line); }
+  aside .legend .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: 1px; }
+  aside .legend .red   { background: var(--red); }
+  aside .legend .amber { background: var(--amber); }
+  aside .legend .green { background: var(--green); }
+  aside .legend .grey  { background: var(--grey-keep); }
+
+  /* Main */
+  main { padding: 56px 64px 80px; max-width: 980px; }
+  @media (max-width: 800px) { main { padding: 36px 24px 60px; } }
+
+  h1 {
+    font-family: 'Cormorant', serif;
+    font-size: 48px;
+    font-weight: 500;
+    margin: 0 0 8px;
+    letter-spacing: -0.01em;
+  }
+  h1 em { color: var(--green); font-style: italic; }
+  .lede { color: var(--bone-dim); font-size: 16px; max-width: 700px; line-height: 1.55; margin-bottom: 8px; }
+  .meta {
+    font-size: 11px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase;
+    margin-bottom: 40px;
+    border-bottom: 1px solid var(--line); padding-bottom: 16px;
+  }
+
+  h2 {
+    font-family: 'Cormorant', serif;
+    font-size: 30px; font-weight: 500;
+    margin: 56px 0 8px;
+    scroll-margin-top: 24px;
+    display: flex; align-items: center; gap: 14px;
+  }
+  h2 .badge {
+    display: inline-block;
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 4px;
+  }
+  h2.section-delete .badge { background: rgba(255,77,77,0.12); color: var(--red); border: 1px solid rgba(255,77,77,0.3); }
+  h2.section-update .badge { background: rgba(255,184,77,0.12); color: var(--amber); border: 1px solid rgba(255,184,77,0.3); }
+  h2.section-add    .badge { background: rgba(0,255,100,0.12); color: var(--green); border: 1px solid rgba(0,255,100,0.3); }
+  h2.section-keep   .badge { background: rgba(120,120,120,0.12); color: var(--grey-keep); border: 1px solid rgba(120,120,120,0.3); }
+  h2.section-notes  .badge { background: rgba(77,208,255,0.12); color: var(--blue); border: 1px solid rgba(77,208,255,0.3); }
+  h2 em { color: var(--green); font-style: italic; }
+  .section-intro { color: var(--bone-dim); font-size: 14px; margin: 0 0 22px; line-height: 1.55; max-width: 740px; }
+
+  /* Cards */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 18px 20px;
+    margin-bottom: 14px;
+    position: relative;
+  }
+  .card.delete { border-left: 3px solid var(--red); }
+  .card.update { border-left: 3px solid var(--amber); }
+  .card.add    { border-left: 3px solid var(--green); }
+  .card.keep   { border-left: 3px solid var(--grey-keep); opacity: 0.85; }
+  .card-header {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+  }
+  .card-type {
+    font-family: var(--mono);
+    font-size: 11px; font-weight: 500;
+    padding: 2px 8px;
+    border-radius: 3px;
+    background: var(--card-2);
+    color: var(--bone);
+    border: 1px solid var(--line);
+  }
+  .card-name {
+    font-family: var(--mono);
+    font-size: 14px;
+    color: var(--bone);
+  }
+  .card-arrow { color: var(--muted); font-size: 12px; }
+  .card-meta { font-size: 11px; color: var(--muted); margin-left: auto; letter-spacing: 0.04em; }
+
+  .field {
+    margin-bottom: 10px;
+  }
+  .field-label {
+    font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em;
+    margin-bottom: 4px;
+  }
+  .value {
+    font-family: var(--mono);
+    font-size: 12.5px;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 10px 44px 10px 12px;
+    word-break: break-all;
+    line-height: 1.5;
+    position: relative;
+    color: var(--bone);
+  }
+  .value.old { color: var(--muted); text-decoration: line-through; text-decoration-color: rgba(255,77,77,0.5); }
+  .value.new { color: var(--bone); }
+  .copy-btn {
+    position: absolute;
+    top: 6px; right: 6px;
+    background: var(--card-2);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    color: var(--muted);
+    font-family: 'Inter';
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 4px 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .copy-btn:hover { color: var(--green); border-color: var(--green); }
+  .copy-btn.copied { color: var(--green); border-color: var(--green); }
+
+  .why {
+    font-size: 12px;
+    color: var(--bone-dim);
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px dashed var(--line);
+    line-height: 1.5;
+  }
+  .why strong { color: var(--bone); font-weight: 500; }
+
+  /* Notes block */
+  .note-card {
+    background: linear-gradient(180deg, rgba(77,208,255,0.05), rgba(77,208,255,0.01));
+    border: 1px solid rgba(77,208,255,0.2);
+    border-radius: 10px;
+    padding: 18px 22px;
+    margin-bottom: 14px;
+  }
+  .note-card h3 { margin: 0 0 8px; font-size: 15px; font-weight: 600; color: var(--blue); }
+  .note-card p { margin: 0 0 6px; color: var(--bone-dim); font-size: 13.5px; line-height: 1.55; }
+  .note-card code { font-family: var(--mono); font-size: 12px; background: var(--bg); padding: 2px 6px; border-radius: 3px; color: var(--bone); }
+
+  .ssh {
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 10px 14px;
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--green);
+    display: inline-block;
+    margin-bottom: 16px;
+  }
+
+  /* Progress checkbox */
+  .check-wrap { display: inline-flex; align-items: center; gap: 8px; margin-left: auto; font-size: 11px; color: var(--muted); }
+  .check-wrap input { accent-color: var(--green); cursor: pointer; }
+</style>
+</head>
+<body>
+
+<aside>
+  <div class="brand">team<em>absolute.ca</em></div>
+  <div class="sub">DNS migration</div>
+  <nav>
+    <a href="#delete" class="delete">Delete (4)</a>
+    <a href="#update" class="update">Update (3)</a>
+    <a href="#add" class="add">Add (4)</a>
+    <a href="#keep" class="keep">Keep unchanged (7)</a>
+    <a href="#notes" class="keep">Notes &amp; gotchas</a>
+    <a href="#after" class="keep">After Cloudflare</a>
+  </nav>
+
+  <div class="legend">
+    <div><span class="dot red"></span>Delete — old MXroute / unused</div>
+    <div><span class="dot amber"></span>Update — keep the record, change the value</div>
+    <div><span class="dot green"></span>Add — new records for Hestia mail</div>
+    <div><span class="dot grey"></span>Keep — site &amp; Resend, untouched</div>
+  </div>
+</aside>
+
+<main>
+  <h1>teamabsolute.ca <em>DNS migration</em></h1>
+  <p class="lede">Move email from MXroute to your self-hosted Hestia. Live site (Cloudflare Pages) and Resend transactional stay untouched. Each record below has a copy button.</p>
+  <div class="meta">Reference · Open while editing in Cloudflare</div>
+
+  <!-- DELETE -->
+  <h2 id="delete" class="section-delete"><span class="badge">Delete</span> Old MXroute &amp; unused records</h2>
+  <p class="section-intro">These point at MXroute (`chocobo.mxrouting.net`) or are stale verifications. Safe to remove.</p>
+
+  <div class="card delete">
+    <div class="card-header">
+      <span class="card-type">CNAME</span>
+      <span class="card-name">mail</span>
+      <span class="card-arrow">→</span>
+      <span class="card-name">chocobo.mxrouting.net</span>
+      <span class="check-wrap"><input type="checkbox"> done</span>
+    </div>
+    <div class="why">Replaced by an A record below pointing to your Hetzner server.</div>
+  </div>
+
+  <div class="card delete">
+    <div class="card-header">
+      <span class="card-type">CNAME</span>
+      <span class="card-name">webmail</span>
+      <span class="card-arrow">→</span>
+      <span class="card-name">chocobo.mxrouting.net</span>
+      <span class="check-wrap"><input type="checkbox"> done</span>
+    </div>
+    <div class="why">Replaced by an A record below.</div>
+  </div>
+
+  <div class="card delete">
+    <div class="card-header">
+      <span class="card-type">TXT</span>
+      <span class="card-name">_da-verify-caaaee5a5758f1182d3a8ec2aa3a8c0b</span>
+      <span class="check-wrap"><input type="checkbox"> done</span>
+    </div>
+    <div class="field">
+      <div class="field-label">Current value</div>
+      <div class="value old">"domain-verified"</div>
+    </div>
+    <div class="why">DirectAdmin domain verification — already done its job, no longer used.</div>
+  </div>
+
+  <div class="card delete">
+    <div class="card-header">
+      <span class="card-type">TXT × 2</span>
+      <span class="card-name">_vercel</span>
+      <span class="check-wrap"><input type="checkbox"> done</span>
+    </div>
+    <div class="why">Two TXT records starting with <code>vc-domain-verify=</code>. The site is on Cloudflare Pages now, not Vercel — these can go.</div>
+  </div>
+
+  <!-- UPDATE -->
+  <h2 id="update" class="section-update"><span class="badge">Update</span> Edit value, keep the record</h2>
+  <p class="section-intro">Don't delete + recreate — use Cloudflare's <strong>Edit</strong> button on each row to preserve any history.</p>
+
+  <div class="card update">
+    <div class="card-header">
+      <span class="card-type">MX</span>
+      <span class="card-name">teamabsolute.ca</span>
+      <span class="card-arrow">→</span>
+      <span class="card-name">mail.teamabsolute.ca</span>
+      <span class="check-wrap"><input type="checkbox"> done</span>
+    </div>
+    <div class="field">
+      <div class="field-label">Currently</div>
+      <div class="value old">priority 0</div>
+    </div>
+    <div class="field">
+      <div class="field-label">Change priority to</div>
+      <div class="value new">10<button class="copy-btn" data-copy="10">Copy</button></div>
+    </div>
+    <div class="why">Priority 0 works but is unconventional. <strong>10</strong> is the standard for primary MX, leaves room for future fallback servers.</div>
+  </div>
+
+  <div class="card update">
+    <div class="card-header">
+      <span class="card-type">TXT</span>
+      <span class="card-name">teamabsolute.ca</span>
+      <span class="card-meta">SPF (root)</span>
+      <span class="check-wrap"><input type="checkbox"> done</span>
+    </div>
+    <div class="field">
+      <div class="field-label">Currently</div>
+      <div class="value old">"v=spf1 a mx include:secureserver.net include:amazonses.com ~all"</div>
+    </div>
+    <div class="field">
+      <div class="field-label">Replace with</div>
+      <div class="value new">v=spf1 a mx include:spf.brevo.com include:amazonses.com ~all<button class="copy-btn" data-copy="v=spf1 a mx include:spf.brevo.com include:amazonses.com ~all">Copy</button></div>
+    </div>
+    <div class="why">Drops <strong>secureserver.net</strong> (GoDaddy, no longer used) and adds <strong>spf.brevo.com</strong> (your outbound relay). Keeps <strong>amazonses.com</strong> for Resend transactional. Soft-fail (<code>~all</code>) so legitimate edge cases don't bounce.</div>
+  </div>
+
+  <div class="card update">
+    <div class="card-header">
+      <span class="card-type">TXT</span>
+      <span class="card-name">_dmarc</span>
+      <span class="check-wrap"><input type="checkbox"> done</span>
+    </div>
+    <div class="field">
+      <div class="field-label">Currently</div>
+      <div class="value old">"v=DMARC1; p=none; rua=mailto:79f23…@dmarc-reports.cloudflare.net"</div>
+    </div>
+    <div class="field">
+      <div class="field-label">Replace with</div>
+      <div class="value new">v=DMARC1; p=quarantine; adkim=r; aspf=r; pct=100; rua=mailto:rua@jonathanellis.dev<button class="copy-btn" data-copy="v=DMARC1; p=quarantine; adkim=r; aspf=r; pct=100; rua=mailto:rua@jonathanellis.dev">Copy</button></div>
+    </div>
+    <div class="why"><strong>p=quarantine</strong> tells receivers to spam-bin spoofed mail (was <code>p=none</code>, monitor only). Reports go to <code>rua@jonathanellis.dev</code> — a centralized mailbox so Matt's inbox isn't cluttered with daily DMARC reports from every domain. <strong>Important:</strong> this is cross-domain reporting, so you also need to add an authorization record at the jonathanellis.dev zone — see Notes section below.</div>
+  </div>
+
+  <!-- ADD -->
+  <h2 id="add" class="section-add"><span class="badge">Add</span> New records for Hestia mail</h2>
+  <p class="section-intro">Click <strong>+ Add record</strong> in Cloudflare for each. All set to <strong>DNS only</strong> (gray cloud) — never proxy mail-related records through Cloudflare.</p>
+
+  <div class="card add">
+    <div class="card-header">
+      <span class="card-type">A</span>
+      <span class="card-name">mail</span>
+      <span class="card-arrow">→</span>
+      <span class="card-meta">DNS only · Auto TTL</span>
+      <span class="check-wrap"><input type="checkbox"> done</span>
+    </div>
+    <div class="field">
+      <div class="field-label">Value</div>
+      <div class="value new">178.105.40.71<button class="copy-btn" data-copy="178.105.40.71">Copy</button></div>
+    </div>
+    <div class="why">Your Hetzner server. Replaces the deleted MXroute CNAME above.</div>
+  </div>
+
+  <div class="card add">
+    <div class="card-header">
+      <span class="card-type">A</span>
+      <span class="card-name">webmail</span>
+      <span class="card-arrow">→</span>
+      <span class="card-meta">DNS only · Auto TTL</span>
+      <span class="check-wrap"><input type="checkbox"> done</span>
+    </div>
+    <div class="field">
+      <div class="field-label">Value</div>
+      <div class="value new">178.105.40.71<button class="copy-btn" data-copy="178.105.40.71">Copy</button></div>
+    </div>
+    <div class="why">Reserves the hostname for future Roundcube webmail. Doesn't serve anything yet — Coolify owns 80/443 — but in place for later.</div>
+  </div>
+
+  <div class="card add">
+    <div class="card-header">
+      <span class="card-type">TXT</span>
+      <span class="card-name">mail._domainkey</span>
+      <span class="card-meta">DKIM signing key · Auto TTL</span>
+      <span class="check-wrap"><input type="checkbox"> done</span>
+    </div>
+    <div class="field">
+      <div class="field-label">Value (one TXT record, no quotes — Cloudflare adds them)</div>
+      <div class="value new" style="padding-right: 70px;">v=DKIM1; k=rsa; p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAsnuu0BzQXC0i2NWiKF2z7OIcpFFx1hYs5yxL1y2lecsignCiez6Co6EMgKMV0J8FPtxgGZExY+l2NzWO/dv7BOkkfRRNVgjmDdk+8WG7vVOb+7MTrKwpRdbViSJsHLrtcdnFvXmY3eNo8RzPvbXE4urBJRdACMdot0VFiFcVp0vKIAOacrsePHesljGP2M0BK2VVKgdIDgHJqy1XCfE5ouvOQTiL05/6QmNlm/abJ0pzqo6q4rxOfSiq0en45rd/kwzRb0kYtX3x0Ioz4w3lcmC0YZKLLILaDPEbm276yyheBGnIABseSlmon7hcMKyvzrrhINCs5Hu6kP1aJaGpQQIDAQAB<button class="copy-btn" data-copy="v=DKIM1; k=rsa; p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAsnuu0BzQXC0i2NWiKF2z7OIcpFFx1hYs5yxL1y2lecsignCiez6Co6EMgKMV0J8FPtxgGZExY+l2NzWO/dv7BOkkfRRNVgjmDdk+8WG7vVOb+7MTrKwpRdbViSJsHLrtcdnFvXmY3eNo8RzPvbXE4urBJRdACMdot0VFiFcVp0vKIAOacrsePHesljGP2M0BK2VVKgdIDgHJqy1XCfE5ouvOQTiL05/6QmNlm/abJ0pzqo6q4rxOfSiq0en45rd/kwzRb0kYtX3x0Ioz4w3lcmC0YZKLLILaDPEbm276yyheBGnIABseSlmon7hcMKyvzrrhINCs5Hu6kP1aJaGpQQIDAQAB">Copy</button></div>
+    </div>
+    <div class="why">Hestia's DKIM public key for outgoing mail signing. Recipients use this to verify mail is actually from your server. <strong>One TXT value as shown</strong> — Cloudflare auto-handles the 255-char chunking.</div>
+  </div>
+
+  <div class="card add">
+    <div class="card-header">
+      <span class="card-type">TXT</span>
+      <span class="card-name">_domainkey</span>
+      <span class="card-meta">ADSP (optional) · Auto TTL</span>
+      <span class="check-wrap"><input type="checkbox"> done</span>
+    </div>
+    <div class="field">
+      <div class="field-label">Value</div>
+      <div class="value new">t=y; o=~;<button class="copy-btn" data-copy="t=y; o=~;">Copy</button></div>
+    </div>
+    <div class="why">Hestia's recommended DKIM ADSP record. Largely deprecated by DMARC but harmless. Skip if you want to keep DNS minimal.</div>
+  </div>
+
+  <!-- KEEP -->
+  <h2 id="keep" class="section-keep"><span class="badge">Keep</span> Don't touch these</h2>
+  <p class="section-intro">Your live site, R2 hosting, and Resend transactional. Leave them exactly as they are.</p>
+
+  <div class="card keep">
+    <div class="card-header"><span class="card-type">CNAME</span><span class="card-name">teamabsolute.ca</span><span class="card-arrow">→</span><span class="card-name">teamabsolute.pages.dev</span><span class="card-meta">Proxied</span></div>
+    <div class="why">Live site root (Cloudflare Pages).</div>
+  </div>
+  <div class="card keep">
+    <div class="card-header"><span class="card-type">CNAME</span><span class="card-name">www</span><span class="card-arrow">→</span><span class="card-name">teamabsolute.pages.dev</span><span class="card-meta">Proxied</span></div>
+    <div class="why">Live site www.</div>
+  </div>
+  <div class="card keep">
+    <div class="card-header"><span class="card-type">CNAME</span><span class="card-name">images</span><span class="card-arrow">→</span><span class="card-name">team-absolute-images (R2)</span><span class="card-meta">Proxied</span></div>
+    <div class="why">R2 image hosting bucket.</div>
+  </div>
+  <div class="card keep">
+    <div class="card-header"><span class="card-type">CNAME</span><span class="card-name">media</span><span class="card-arrow">→</span><span class="card-name">public.r2.dev</span><span class="card-meta">Proxied</span></div>
+    <div class="why">R2 public media.</div>
+  </div>
+  <div class="card keep">
+    <div class="card-header"><span class="card-type">MX</span><span class="card-name">send.teamabsolute.ca</span><span class="card-arrow">→</span><span class="card-name">feedback-smtp.us-east-1.amazonses.com (10)</span></div>
+    <div class="why">Resend bounce return path. Your transactional email infra. Untouched.</div>
+  </div>
+  <div class="card keep">
+    <div class="card-header"><span class="card-type">TXT</span><span class="card-name">send</span><span class="card-meta">SPF for send subdomain</span></div>
+    <div class="why"><code>"v=spf1 include:amazonses.com ~all"</code> — Resend SPF, leave alone.</div>
+  </div>
+  <div class="card keep">
+    <div class="card-header"><span class="card-type">TXT</span><span class="card-name">resend._domainkey</span><span class="card-meta">Resend DKIM</span></div>
+    <div class="why">Resend's DKIM signing key for transactional mail. Different selector (<code>resend</code>) than Hestia (<code>mail</code>) so no conflict — both can coexist.</div>
+  </div>
+
+  <!-- NOTES -->
+  <h2 id="notes" class="section-notes"><span class="badge">Notes</span> Why it's set up this way</h2>
+
+  <div class="note-card">
+    <h3>Why I changed Hestia's recommended SPF</h3>
+    <p>Hestia suggested <code>v=spf1 a mx ip4:178.105.40.71 -all</code> — too strict. The <code>-all</code> hard-fails any sender that isn't your server's IP, which would <strong>block your Brevo relay</strong> (your outbound goes through Brevo's IPs, not the server). The version above authorizes both Brevo and Amazon SES (Resend) and uses soft-fail (<code>~all</code>) — same shape that works for jonathanellis.dev.</p>
+  </div>
+
+  <div class="note-card">
+    <h3>Why both DKIM selectors are needed (mail + resend)</h3>
+    <p>You sign outbound mail twice: once by Hestia (selector <code>mail</code>) for IMAP/SMTP messages, and once by Resend (selector <code>resend</code>) for transactional. They live at different DNS names so there's no conflict — recipients verify whichever signature matches the sending path.</p>
+    <p>Brevo will likely want a third selector when you authenticate the domain there — typically <code>mail2._domainkey</code>. Add that record when Brevo gives it to you.</p>
+  </div>
+
+  <div class="note-card">
+    <h3>Cross-domain DMARC reporting — authorization record needed</h3>
+    <p>Because <code>teamabsolute.ca</code>'s rua reports go to <code>rua@jonathanellis.dev</code> (a different domain), per RFC 7489 you need an authorization record at the receiving domain. <strong>Add this TXT record to the jonathanellis.dev zone</strong> (not teamabsolute.ca):</p>
+    <p>Name: <code>teamabsolute.ca._report._dmarc</code><br>Value: <code>v=DMARC1</code></p>
+    <p>Without this, Google/Microsoft will refuse to send the DMARC reports across domains.</p>
+  </div>
+
+  <div class="note-card">
+    <h3>Mail records must be DNS-only (gray cloud)</h3>
+    <p>Cloudflare proxy (orange cloud) only handles HTTP/S. Proxying an MX or A record meant for mail breaks SMTP delivery — receivers can't reach the actual server. Always gray for: <code>mail</code>, <code>webmail</code>, MX, all <code>_domainkey</code>, <code>_dmarc</code>, SPF.</p>
+  </div>
+
+  <div class="note-card">
+    <h3>If "nginx restart failed" comes back</h3>
+    <p>Hestia's GUI tries to set up nginx for the webmail subdomain on ports 80/443, which Coolify owns. The mail domain itself adds fine — just the web-side fails. To silence:</p>
+    <p><code>v-delete-web-domain server-ops webmail.teamabsolute.ca 2>/dev/null</code></p>
+    <p><code>nginx -t && systemctl reload nginx</code></p>
+  </div>
+
+  <!-- AFTER -->
+  <h2 id="after" class="section-notes"><span class="badge">After</span> When DNS has propagated</h2>
+
+  <div class="note-card">
+    <h3>1. Issue Let's Encrypt cert for mail.teamabsolute.ca</h3>
+    <p>Wait ~5 min after editing DNS, then SSH in:</p>
+    <div class="ssh">ssh root@server.jonathanellis.dev</div>
+    <p>Then:</p>
+    <p><code>v-add-letsencrypt-domain server-ops teamabsolute.ca '' '' '' mail.teamabsolute.ca</code></p>
+  </div>
+
+  <div class="note-card">
+    <h3>2. Verify everything from outside the server</h3>
+    <p><code>dig +short MX teamabsolute.ca</code> → expect <code>10 mail.teamabsolute.ca</code></p>
+    <p><code>dig +short A mail.teamabsolute.ca</code> → expect <code>178.105.40.71</code></p>
+    <p><code>dig +short TXT mail._domainkey.teamabsolute.ca</code> → expect the DKIM key (one long line)</p>
+    <p><code>dig +short TXT _dmarc.teamabsolute.ca</code> → expect the new <code>p=quarantine</code> record</p>
+  </div>
+
+  <div class="note-card">
+    <h3>3. Authenticate domain in Brevo</h3>
+    <p>Brevo dashboard → Senders &amp; Domains → Domains → <strong>Authenticate teamabsolute.ca</strong>. Brevo will give you 1–3 CNAME records (typically <code>mail2._domainkey</code> + a verification token). Add those to Cloudflare exactly as Brevo specifies. Without this, outbound mail via Brevo isn't DKIM-signed by Brevo — gmail/outlook will be more likely to spam-bin it.</p>
+  </div>
+
+  <div class="note-card">
+    <h3>4. Test deliverability</h3>
+    <p>Send a test from <code>matt@teamabsolute.ca</code> to a fresh address from <a href="https://www.mail-tester.com/" style="color:var(--green);" target="_blank">mail-tester.com</a> — they email back a score out of 10. Target: <strong>9.5+</strong>. If anything's missing they'll tell you exactly which DNS line.</p>
+  </div>
+
+</main>
+
+<script>
+  document.querySelectorAll('.copy-btn').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      const text = btn.dataset.copy;
+      try {
+        await navigator.clipboard.writeText(text);
+        const original = btn.textContent;
+        btn.textContent = 'Copied';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.textContent = original;
+          btn.classList.remove('copied');
+        }, 1400);
+      } catch (err) {
+        console.error('Copy failed', err);
+      }
+    });
+  });
+</script>
+
+</body>
+</html>

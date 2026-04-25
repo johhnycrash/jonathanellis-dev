@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Team Absolute · Email setup for Matt</title>
+<meta name="description" content="One-tap email setup for the @teamabsolute.ca mailboxes — Matt's onboarding page.">
+<meta name="robots" content="noindex,nofollow">
+<link rel="icon" type="image/svg+xml" href="/public/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,400;0,500;1,500&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --bg-2: #111;
+    --card: #161616;
+    --card-2: #1c1c1c;
+    --line: #2a2a2a;
+    --bone: #f0ece4;
+    --bone-dim: #c0bcb4;
+    --muted: #777;
+    --green: #00ff64;
+    --gold: #d4a14a;
+    --mono: 'JetBrains Mono', ui-monospace, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { background: var(--bg); color: var(--bone); font-family: 'Inter', sans-serif; margin: 0; }
+  .wrap { max-width: 880px; margin: 0 auto; padding: 56px 28px 80px; }
+
+  .kicker { font-size: 11px; letter-spacing: 0.18em; color: var(--gold); text-transform: uppercase; margin-bottom: 12px; }
+  h1 {
+    font-family: 'Cormorant', serif;
+    font-weight: 500;
+    font-size: 56px;
+    line-height: 1.05;
+    letter-spacing: -0.015em;
+    margin: 0 0 14px;
+  }
+  h1 em { color: var(--gold); font-style: italic; }
+  .lede { color: var(--bone-dim); font-size: 16px; line-height: 1.6; max-width: 640px; margin: 0 0 36px; }
+
+  h2 { font-family: 'Cormorant', serif; font-weight: 500; font-size: 30px; margin: 56px 0 12px; letter-spacing: -0.005em; }
+  h2 em { color: var(--gold); font-style: italic; }
+  p { line-height: 1.6; color: var(--bone-dim); }
+
+  .acct-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 14px;
+    margin: 8px 0 32px;
+  }
+  .acct {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 22px 20px;
+    transition: all 0.18s;
+    position: relative;
+  }
+  .acct:hover { border-color: rgba(212, 161, 74, 0.4); transform: translateY(-2px); }
+  .acct .label { font-size: 11px; letter-spacing: 0.1em; color: var(--muted); text-transform: uppercase; margin-bottom: 8px; }
+  .acct .addr { font-family: var(--mono); font-size: 15px; color: var(--bone); margin-bottom: 16px; word-break: break-all; }
+  .acct .role { font-size: 13px; color: var(--bone-dim); margin-bottom: 18px; min-height: 38px; }
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 11px 18px;
+    border: 1px solid var(--gold);
+    color: var(--gold);
+    background: rgba(212, 161, 74, 0.08);
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 13.5px;
+    letter-spacing: 0.02em;
+    transition: all 0.15s;
+    width: 100%;
+  }
+  .btn:hover { background: rgba(212, 161, 74, 0.18); }
+  .btn .arrow { font-size: 12px; }
+
+  .steps { padding-left: 0; list-style: none; counter-reset: stp; margin: 18px 0; }
+  .steps li {
+    counter-increment: stp;
+    padding-left: 42px;
+    position: relative;
+    margin-bottom: 14px;
+    color: var(--bone-dim);
+    line-height: 1.6;
+  }
+  .steps li::before {
+    content: counter(stp);
+    position: absolute;
+    left: 0; top: 0;
+    width: 28px; height: 28px;
+    border: 1px solid var(--line);
+    color: var(--gold);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px;
+    font-family: var(--mono);
+  }
+  .steps li code { background: var(--card-2); border: 1px solid var(--line); padding: 2px 6px; border-radius: 3px; font-family: var(--mono); font-size: 12.5px; color: var(--bone); }
+
+  .tabs { display: flex; gap: 4px; margin: 14px 0 0; }
+  .tabs button {
+    flex: 1;
+    background: var(--card);
+    color: var(--bone-dim);
+    border: 1px solid var(--line);
+    border-bottom: none;
+    border-radius: 8px 8px 0 0;
+    padding: 12px 18px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .tabs button.active { background: var(--card-2); color: var(--gold); border-color: var(--gold); }
+  .tab-content { display: none; background: var(--card-2); border: 1px solid var(--gold); border-radius: 0 0 10px 10px; padding: 22px 24px; margin-bottom: 18px; }
+  .tab-content.active { display: block; }
+  .detail-box { display: grid; gap: 8px; }
+  .detail-row { display: grid; grid-template-columns: 130px 1fr; gap: 16px; padding: 8px 0; border-bottom: 1px dashed var(--line); }
+  .detail-row:last-child { border-bottom: none; }
+  .detail-row .key { font-size: 12px; color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; }
+  .detail-row .val { font-family: var(--mono); font-size: 13px; color: var(--bone); word-break: break-all; }
+
+  .note {
+    background: linear-gradient(180deg, rgba(212, 161, 74, 0.06), rgba(212, 161, 74, 0.01));
+    border: 1px solid rgba(212, 161, 74, 0.25);
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin: 18px 0;
+    font-size: 13.5px;
+    color: var(--bone-dim);
+    line-height: 1.6;
+  }
+  .note strong { color: var(--bone); font-weight: 500; }
+  .note code { background: var(--bg); border: 1px solid var(--line); padding: 2px 6px; border-radius: 3px; font-family: var(--mono); font-size: 12px; color: var(--bone); }
+
+  footer {
+    margin-top: 80px;
+    padding-top: 24px;
+    border-top: 1px solid var(--line);
+    font-size: 12px;
+    color: var(--muted);
+    display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+  }
+  footer a { color: var(--bone-dim); text-decoration: none; }
+  footer a:hover { color: var(--gold); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="kicker">Team Absolute</div>
+  <h1>Matt — your <em>email</em> setup</h1>
+  <p class="lede">
+    Hey Matt. Tap the right card below for the mailbox you want to set up. The profile installs IMAP and SMTP automatically — you'll only need to type the password Jonathan sent you. One profile per account; you can install all three on the same device.
+  </p>
+
+  <h2>Your <em>three</em> mailboxes</h2>
+  <div class="acct-grid">
+
+    <div class="acct">
+      <div class="label">Personal</div>
+      <div class="addr">matt@teamabsolute.ca</div>
+      <div class="role">Your direct address — for client comms, signing emails, anything personal-from-Matt.</div>
+      <a class="btn" href="/absolute22email/matt-teamabsolute-ca.mobileconfig" download>Install profile <span class="arrow">↓</span></a>
+    </div>
+
+    <div class="acct">
+      <div class="label">General inbox</div>
+      <div class="addr">hello@teamabsolute.ca</div>
+      <div class="role">Public-facing — what shows on the website, business cards, contact forms.</div>
+      <a class="btn" href="/absolute22email/hello-teamabsolute-ca.mobileconfig" download>Install profile <span class="arrow">↓</span></a>
+    </div>
+
+    <div class="acct">
+      <div class="label">Payments</div>
+      <div class="addr">pay@teamabsolute.ca</div>
+      <div class="role">For e-transfers and payment confirmations. Set up auto-deposit so no password is needed.</div>
+      <a class="btn" href="/absolute22email/pay-teamabsolute-ca.mobileconfig" download>Install profile <span class="arrow">↓</span></a>
+    </div>
+
+  </div>
+
+  <h2>How to <em>install</em> on iPhone / iPad</h2>
+  <ol class="steps">
+    <li>Tap one of the green <strong>Install profile</strong> buttons above. iOS will say <em>"This website is trying to download a configuration profile."</em> Tap <strong>Allow</strong>.</li>
+    <li>iOS shows: <em>"Profile downloaded."</em> Open the <strong>Settings</strong> app. At the very top (under your name) you'll see <strong>Profile Downloaded</strong> — tap it.</li>
+    <li>Tap <strong>Install</strong> in the top-right. Enter your iPhone passcode if asked.</li>
+    <li>iOS prompts for the mailbox <strong>password</strong> — type the one Jonathan sent you. Tap <strong>Next</strong>, then <strong>Done</strong>.</li>
+    <li>Open <strong>Mail</strong>. The new account appears within ~5 seconds. First sync takes a minute on a busy mailbox.</li>
+  </ol>
+
+  <h2>How to <em>install</em> on Mac</h2>
+  <ol class="steps">
+    <li>Click the green <strong>Install profile</strong> button. The <code>.mobileconfig</code> downloads to your Downloads folder.</li>
+    <li>Double-click the downloaded file. macOS opens <strong>System Settings → Privacy &amp; Security → Profiles</strong>.</li>
+    <li>Click the <strong>Team Absolute Mail</strong> profile, then <strong>Install</strong>. Enter your Mac password.</li>
+    <li>macOS prompts for the mailbox <strong>password</strong> — type it. Done.</li>
+    <li>Open <strong>Mail</strong>. The new account is loaded.</li>
+  </ol>
+
+  <h2>If profiles aren't your <em>thing</em> — manual settings</h2>
+  <p>Same for every account — substitute the email address.</p>
+  <div class="tabs">
+    <button class="active" data-tab="imap">Incoming (IMAP)</button>
+    <button data-tab="smtp">Outgoing (SMTP)</button>
+  </div>
+  <div class="tab-content active" id="tab-imap">
+    <div class="detail-box">
+      <div class="detail-row"><div class="key">Server</div><div class="val">mail.teamabsolute.ca</div></div>
+      <div class="detail-row"><div class="key">Port</div><div class="val">993</div></div>
+      <div class="detail-row"><div class="key">Encryption</div><div class="val">SSL / TLS</div></div>
+      <div class="detail-row"><div class="key">Authentication</div><div class="val">Password</div></div>
+      <div class="detail-row"><div class="key">Username</div><div class="val">your full email address</div></div>
+      <div class="detail-row"><div class="key">Password</div><div class="val">(provided)</div></div>
+    </div>
+  </div>
+  <div class="tab-content" id="tab-smtp">
+    <div class="detail-box">
+      <div class="detail-row"><div class="key">Server</div><div class="val">mail.teamabsolute.ca</div></div>
+      <div class="detail-row"><div class="key">Port</div><div class="val">587</div></div>
+      <div class="detail-row"><div class="key">Encryption</div><div class="val">STARTTLS (Use SSL: ON)</div></div>
+      <div class="detail-row"><div class="key">Authentication</div><div class="val">Password</div></div>
+      <div class="detail-row"><div class="key">Username</div><div class="val">your full email address</div></div>
+      <div class="detail-row"><div class="key">Password</div><div class="val">same as IMAP</div></div>
+    </div>
+  </div>
+
+  <h2>Trouble <em>connecting</em>?</h2>
+  <ul class="steps">
+    <li>Try cellular data instead of WiFi. Some café/hotel/corporate WiFi blocks port 993.</li>
+    <li>If you previously had a mailbox at the same address from MXroute: delete that account first (Settings → Mail → Accounts → tap account → Delete) before installing the new profile.</li>
+    <li>Check the password is exactly the one Jonathan sent — case-sensitive, no extra spaces.</li>
+    <li>Still stuck? Text or email Jonathan and he'll reset.</li>
+  </ul>
+
+  <div class="note">
+    <strong>Privacy:</strong> the email server runs on Jonathan's own infrastructure (Hetzner Cloud, Nuremberg). Mail isn't filtered through GoDaddy / MXroute / Microsoft / Google. SMTP outbound goes through Brevo's authenticated relay so messages land in inboxes rather than spam.
+  </div>
+
+  <footer>
+    <div>© 2026 Team Absolute</div>
+    <div>
+      Email server hosted by <a href="https://jonathanellis.dev">Jonathan Ellis</a>
+    </div>
+  </footer>
+
+</div>
+
+<script>
+  document.querySelectorAll('.tabs button').forEach(b => {
+    b.addEventListener('click', () => {
+      document.querySelectorAll('.tabs button').forEach(x => x.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+      document.getElementById('tab-' + b.dataset.tab).classList.add('active');
+    });
+  });
+</script>
+
+</body>
+</html>
