@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>PayloadContent</key>
+  <array>
+    <dict>
+      <key>PayloadType</key><string>com.apple.mail.managed</string>
+      <key>PayloadVersion</key><integer>1</integer>
+      <key>PayloadIdentifier</key><string>dev.jonathanellis.mail.rua</string>
+      <key>PayloadUUID</key><string>9D8F2A4E-3C5D-4B1A-9D8F-4E3A8B7C2D9F</string>
+      <key>PayloadDisplayName</key><string>rua@jonathanellis.dev</string>
+      <key>PayloadDescription</key><string>Configures Mail.app with rua@jonathanellis.dev (DMARC report sink)</string>
+      <key>PayloadOrganization</key><string>Jonathan Ellis</string>
+
+      <key>EmailAccountName</key><string>DMARC reports</string>
+      <key>EmailAccountDescription</key><string>rua@jonathanellis.dev</string>
+      <key>EmailAccountType</key><string>EmailTypeIMAP</string>
+      <key>EmailAddress</key><string>rua@jonathanellis.dev</string>
+
+      <key>IncomingMailServerHostName</key><string>mail.jonathanellis.dev</string>
+      <key>IncomingMailServerPortNumber</key><integer>993</integer>
+      <key>IncomingMailServerUseSSL</key><true/>
+      <key>IncomingMailServerAuthentication</key><string>EmailAuthPassword</string>
+      <key>IncomingMailServerUsername</key><string>rua@jonathanellis.dev</string>
+
+      <key>OutgoingMailServerHostName</key><string>mail.jonathanellis.dev</string>
+      <key>OutgoingMailServerPortNumber</key><integer>587</integer>
+      <key>OutgoingMailServerUseSSL</key><true/>
+      <key>OutgoingMailServerAuthentication</key><string>EmailAuthPassword</string>
+      <key>OutgoingMailServerUsername</key><string>rua@jonathanellis.dev</string>
+      <key>OutgoingPasswordSameAsIncomingPassword</key><true/>
+      <key>SMTPEnableStartTLS</key><true/>
+
+      <key>PreventMove</key><false/>
+      <key>PreventAppSheet</key><false/>
+      <key>disableMailRecentsSyncing</key><false/>
+    </dict>
+  </array>
+
+  <key>PayloadDisplayName</key><string>Jonathan Ellis Mail — rua@jonathanellis.dev</string>
+  <key>PayloadDescription</key><string>Installs rua@jonathanellis.dev (DMARC report sink — reports from all domains land here).</string>
+  <key>PayloadIdentifier</key><string>dev.jonathanellis.mailsetup.rua</string>
+  <key>PayloadOrganization</key><string>Jonathan Ellis</string>
+  <key>PayloadType</key><string>Configuration</string>
+  <key>PayloadUUID</key><string>AE9F2A4E-3C5D-4B1A-9D8F-4E3A8B7C2DAF</string>
+  <key>PayloadVersion</key><integer>1</integer>
+  <key>PayloadRemovalDisallowed</key><false/>
+</dict>
+</plist>
