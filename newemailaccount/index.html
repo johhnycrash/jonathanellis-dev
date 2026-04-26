@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>New email account · Jonathan HQ</title>
+<meta name="robots" content="noindex,nofollow">
+<link rel="icon" type="image/svg+xml" href="/public/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,400;0,500;1,500&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --bg-2: #111;
+    --card: #161616;
+    --card-2: #1c1c1c;
+    --line: #2a2a2a;
+    --bone: #f0ece4;
+    --bone-dim: #c0bcb4;
+    --muted: #777;
+    --green: #00ff64;
+    --gold: #d4a14a;
+    --red: #ff4d4d;
+    --amber: #ffb84d;
+    --mono: 'JetBrains Mono', ui-monospace, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { background: var(--bg); color: var(--bone); font-family: 'Inter', sans-serif; margin: 0; }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 56px 28px 80px; }
+
+  .breadcrumb { font-size: 12px; color: var(--muted); margin-bottom: 18px; }
+  .breadcrumb a { color: var(--bone-dim); text-decoration: none; }
+  .breadcrumb a:hover { color: var(--green); }
+
+  h1 { font-family: 'Cormorant', serif; font-weight: 500; font-size: 48px; line-height: 1.05; margin: 0 0 12px; letter-spacing: -0.015em; }
+  h1 em { color: var(--green); font-style: italic; }
+  .lede { color: var(--bone-dim); font-size: 15px; line-height: 1.55; margin: 0 0 36px; max-width: 620px; }
+
+  h2 { font-family: 'Cormorant', serif; font-weight: 500; font-size: 28px; margin: 56px 0 14px; letter-spacing: -0.005em; }
+  h2 em { color: var(--gold); font-style: italic; }
+
+  .panel {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 26px 28px;
+    margin-bottom: 22px;
+  }
+  .panel h3 { margin: 0 0 6px; font-size: 17px; font-weight: 500; color: var(--bone); }
+  .panel .panel-desc { font-size: 13.5px; color: var(--bone-dim); margin: 0 0 22px; line-height: 1.55; }
+
+  .field { margin-bottom: 16px; }
+  .field label {
+    display: block;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .field input, .field select {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 11px 14px;
+    color: var(--bone);
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    transition: border-color 0.15s;
+  }
+  .field input:focus, .field select:focus { outline: none; border-color: var(--green); }
+  .field input.mono, .field select.mono { font-family: var(--mono); font-size: 13.5px; }
+
+  .row { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: end; }
+  .row .field { margin-bottom: 0; }
+  .at { font-family: var(--mono); color: var(--muted); padding-bottom: 12px; font-size: 14px; }
+
+  .btn {
+    background: var(--green);
+    color: #000;
+    border: none;
+    border-radius: 8px;
+    padding: 13px 22px;
+    font-family: 'Inter';
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    transition: opacity 0.15s;
+    width: 100%;
+  }
+  .btn:hover { opacity: 0.85; }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn.gold { background: var(--gold); }
+  .btn.danger { background: var(--red); color: var(--bone); }
+
+  .status {
+    margin-top: 16px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 13.5px;
+    display: none;
+  }
+  .status.show { display: block; }
+  .status.success { background: rgba(0,255,100,0.08); border: 1px solid rgba(0,255,100,0.3); color: var(--green); }
+  .status.error { background: rgba(255,77,77,0.08); border: 1px solid rgba(255,77,77,0.3); color: var(--red); }
+  .status.info { background: rgba(255,184,77,0.08); border: 1px solid rgba(255,184,77,0.3); color: var(--amber); }
+
+  .download-link {
+    display: inline-block;
+    margin-top: 14px;
+    padding: 10px 16px;
+    background: var(--green);
+    color: #000;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 13.5px;
+  }
+  .download-link:hover { opacity: 0.85; }
+
+  .pw-strength { display: flex; gap: 4px; margin-top: 6px; }
+  .pw-strength span { flex: 1; height: 3px; background: var(--line); border-radius: 2px; transition: background 0.2s; }
+  .pw-strength.weak span:nth-child(1) { background: var(--red); }
+  .pw-strength.fair span:nth-child(-n+2) { background: var(--amber); }
+  .pw-strength.good span:nth-child(-n+3) { background: var(--gold); }
+  .pw-strength.strong span { background: var(--green); }
+
+  .gen-pw {
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--bone-dim);
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.15s;
+    margin-top: 6px;
+  }
+  .gen-pw:hover { border-color: var(--green); color: var(--green); }
+
+  .api-warn {
+    background: linear-gradient(180deg, rgba(255,184,77,0.05), rgba(255,184,77,0.01));
+    border: 1px dashed rgba(255,184,77,0.3);
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin-bottom: 22px;
+    font-size: 13px;
+    color: var(--bone-dim);
+    line-height: 1.55;
+  }
+  .api-warn strong { color: var(--amber); }
+  .api-warn code { font-family: var(--mono); background: var(--bg); padding: 2px 6px; border-radius: 3px; color: var(--bone); font-size: 11.5px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="breadcrumb"><a href="/hq/">← HQ</a></div>
+  <h1>New <em>email account</em></h1>
+  <p class="lede">Spin up a new mailbox on any of your mail domains. Hestia adds the account, the page generates a <code>.mobileconfig</code> profile for one-tap install, and you can drop the new mailbox into any device immediately.</p>
+
+  <div class="api-warn">
+    <strong>Backend not yet deployed.</strong> This page is the frontend — fully wired up. The Hestia API can't be safely called from client-side JavaScript (would expose the access key). Next session we deploy a small Flask backend on Coolify (see architecture notes at the bottom). Until then, the form below previews the UX but won't actually create accounts.
+  </div>
+
+  <!-- ========== ADD MAILBOX TO EXISTING DOMAIN ========== -->
+  <h2>Add a <em>mailbox</em></h2>
+  <div class="panel">
+    <h3>Pick a domain, choose a name, set a password</h3>
+    <p class="panel-desc">Lists every mail domain currently configured in Hestia. The new mailbox is created, and you get a profile to install.</p>
+
+    <form id="add-mailbox" autocomplete="off">
+
+      <div class="row">
+        <div class="field">
+          <label for="local">Local part</label>
+          <input id="local" name="local" type="text" class="mono" placeholder="e.g. matt, hello, pay" required pattern="[a-z0-9._-]+">
+        </div>
+        <div class="at">@</div>
+        <div class="field">
+          <label for="domain">Domain</label>
+          <select id="domain" name="domain" class="mono" required>
+            <option value="">— loading domains —</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="password">Password</label>
+        <input id="password" name="password" type="text" class="mono" placeholder="paste or generate" required minlength="12">
+        <div class="pw-strength" id="pw-strength"><span></span><span></span><span></span><span></span></div>
+        <button type="button" class="gen-pw" id="gen-pw">Generate strong password</button>
+      </div>
+
+      <button type="submit" class="btn">Create mailbox + download profile</button>
+
+      <div class="status" id="status"></div>
+    </form>
+  </div>
+
+  <!-- ========== ADD NEW DOMAIN ========== -->
+  <h2>Add a <em>new domain</em></h2>
+  <div class="panel">
+    <h3>Onboard a domain to the mail server</h3>
+    <p class="panel-desc">For when a new business / brand needs email here. Adds the domain to Hestia, generates DKIM keys, prints the DNS records you need to set at Cloudflare, then auto-extends the mail SSL cert via DNS-01.</p>
+
+    <form id="add-domain" autocomplete="off">
+
+      <div class="field">
+        <label for="newdomain">Domain (no www, no protocol)</label>
+        <input id="newdomain" name="newdomain" type="text" class="mono" placeholder="e.g. theunwashedofficial.com" required pattern="[a-z0-9.-]+\.[a-z]{2,}">
+      </div>
+
+      <div class="field">
+        <label>Cloudflare zone</label>
+        <input type="text" class="mono" placeholder="auto-detected from Cloudflare API" disabled>
+      </div>
+
+      <button type="submit" class="btn gold">Add domain · generate DNS records · extend cert</button>
+
+      <div class="status" id="domain-status"></div>
+    </form>
+  </div>
+
+  <!-- ========== ARCHITECTURE NOTES ========== -->
+  <h2>Backend <em>architecture</em></h2>
+  <div class="panel">
+    <h3>What needs to be built next session</h3>
+    <p class="panel-desc">Small Flask app deployed alongside Coolify. ~150 lines of Python. Endpoints below. The frontend you're seeing already calls these — once the backend is live, this page works.</p>
+    <pre style="font-family: var(--mono); font-size: 12px; color: var(--bone-dim); background: var(--bg); padding: 18px; border-radius: 8px; line-height: 1.6; overflow-x: auto;">
+GET  /api/domains
+     → calls Hestia: v-list-mail-domains server-ops json
+     → returns: ["jonathanellis.dev", "jonathanellis.ca", "teamabsolute.ca"]
+
+POST /api/mailbox
+     body: { domain, local, password }
+     → calls Hestia: v-add-mail-account server-ops &lt;domain&gt; &lt;local&gt; &lt;pw&gt; 0
+     → returns: { ok: true, email: "&lt;local&gt;@&lt;domain&gt;" }
+
+GET  /api/profile/&lt;email&gt;
+     → generates a .mobileconfig from a template
+     → returns: application/x-apple-aspen-config download
+
+POST /api/domain
+     body: { domain }
+     → 1. v-add-mail-domain server-ops &lt;domain&gt;
+     → 2. read /home/server-ops/conf/mail/&lt;domain&gt;/dkim.pub.key
+     → 3. Cloudflare API: add MX, SPF, DKIM, DMARC records
+     → 4. certbot certonly --dns-cloudflare ... -d mail.&lt;domain&gt; -d webmail.&lt;domain&gt; (re-issue multi-SAN cert)
+     → 5. reload exim4 + dovecot
+     → returns: { ok: true, dns_added: [...], cert_issued: true }
+    </pre>
+    <p class="panel-desc" style="margin-top:18px;">All of this sits behind <strong>Cloudflare Access</strong> so only your authenticated email can reach <code>jonathanellis.dev/newemailaccount</code> in the first place. The Flask backend trusts the <code>CF-Access-Authenticated-User-Email</code> header set by Cloudflare — no second auth layer needed.</p>
+  </div>
+
+</div>
+
+<script>
+  // === Frontend logic — already written, just needs the backend to be live ===
+
+  async function loadDomains() {
+    try {
+      const res = await fetch('/api/domains');
+      if (!res.ok) throw new Error('Backend not deployed yet');
+      const domains = await res.json();
+      const sel = document.getElementById('domain');
+      sel.innerHTML = '';
+      domains.forEach(d => {
+        const opt = document.createElement('option');
+        opt.value = d;
+        opt.textContent = d;
+        sel.appendChild(opt);
+      });
+    } catch (e) {
+      // Fallback: show known domains as static options for visual completeness
+      const sel = document.getElementById('domain');
+      sel.innerHTML = `
+        <option value="jonathanellis.dev">jonathanellis.dev</option>
+        <option value="jonathanellis.ca">jonathanellis.ca</option>
+        <option value="teamabsolute.ca">teamabsolute.ca</option>
+      `;
+    }
+  }
+
+  function generatePassword() {
+    const charset = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789!@#$%^&*';
+    let pw = '';
+    const arr = new Uint8Array(20);
+    crypto.getRandomValues(arr);
+    for (let i = 0; i < 20; i++) pw += charset[arr[i] % charset.length];
+    document.getElementById('password').value = pw;
+    updatePwStrength();
+  }
+
+  function updatePwStrength() {
+    const pw = document.getElementById('password').value;
+    const meter = document.getElementById('pw-strength');
+    meter.className = 'pw-strength';
+    if (pw.length >= 16 && /[A-Z]/.test(pw) && /[0-9]/.test(pw) && /[^A-Za-z0-9]/.test(pw)) meter.classList.add('strong');
+    else if (pw.length >= 12 && /[A-Z]/.test(pw) && /[0-9]/.test(pw)) meter.classList.add('good');
+    else if (pw.length >= 10) meter.classList.add('fair');
+    else if (pw.length > 0) meter.classList.add('weak');
+  }
+
+  function showStatus(id, kind, msg, html) {
+    const el = document.getElementById(id);
+    el.className = 'status show ' + kind;
+    el.innerHTML = html ? msg : '';
+    if (!html) el.textContent = msg;
+  }
+
+  document.getElementById('gen-pw').addEventListener('click', generatePassword);
+  document.getElementById('password').addEventListener('input', updatePwStrength);
+
+  document.getElementById('add-mailbox').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const local = document.getElementById('local').value.trim().toLowerCase();
+    const domain = document.getElementById('domain').value;
+    const password = document.getElementById('password').value;
+    showStatus('status', 'info', 'Creating mailbox…');
+    try {
+      const res = await fetch('/api/mailbox', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ local, domain, password })
+      });
+      if (!res.ok) throw new Error((await res.json()).error || 'request failed');
+      const data = await res.json();
+      showStatus('status', 'success',
+        `<strong>${data.email}</strong> created. <a class="download-link" href="/api/profile/${data.email}" download>Download .mobileconfig</a>`,
+        true);
+    } catch (err) {
+      showStatus('status', 'error', 'Backend not yet deployed. ' + err.message);
+    }
+  });
+
+  document.getElementById('add-domain').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const newdomain = document.getElementById('newdomain').value.trim().toLowerCase();
+    showStatus('domain-status', 'info', 'Adding domain (this takes ~30 seconds)…');
+    try {
+      const res = await fetch('/api/domain', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ domain: newdomain })
+      });
+      if (!res.ok) throw new Error((await res.json()).error || 'request failed');
+      const data = await res.json();
+      showStatus('domain-status', 'success', `<strong>${newdomain}</strong> added. DNS records written, cert extended. Open the mailbox form above to add your first inbox.`, true);
+    } catch (err) {
+      showStatus('domain-status', 'error', 'Backend not yet deployed. ' + err.message);
+    }
+  });
+
+  loadDomains();
+</script>
+
+</body>
+</html>
