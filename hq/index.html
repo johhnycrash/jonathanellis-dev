@@ -179,8 +179,9 @@
   <div class="brand">Jonathan<em>HQ</em></div>
   <div class="sub">Operations directory</div>
   <nav>
+    <a href="#runbook">Server runbook</a>
+    <a href="#admin">Admin tools</a>
     <a href="#public">Public pages</a>
-    <a href="#admin">Admin / private</a>
     <a href="#mail-profiles">Mail profiles</a>
     <a href="#subdomains">Subdomains</a>
     <a href="#services">Server services</a>
@@ -232,29 +233,171 @@
 
   </div>
 
-  <!-- ============== ADMIN / PRIVATE ============== -->
-  <h2 id="admin">Admin <em>&amp; private</em> <span class="count">— Cloudflare Access protected</span></h2>
+  <!-- ============== SERVER RUNBOOK — DEEP LINKS ============== -->
+  <h2 id="runbook">Server <em>runbook</em> <span class="count">— jump to any section of the handbook</span></h2>
+  <p style="color: var(--bone-dim); font-size: 14px; margin: 0 0 18px; max-width: 720px; line-height: 1.55;">
+    The full handbook lives at <a href="/hq/runbook/" style="color: var(--green);">/hq/runbook/</a>. The cards below jump you straight to the relevant section — each anchor scrolls to that block of the handbook with all commands, copy buttons, and inline notes.
+  </p>
   <div class="grid">
 
-    <a class="item" href="/hq/">
-      <span class="tag private">Private</span>
-      <div class="url">jonathanellis.dev/hq</div>
-      <div class="name">This page</div>
-      <div class="desc">Master directory of every URL you own. Bookmark this.</div>
+    <a class="item" href="/hq/runbook/#emergency">
+      <span class="tag private">Emergency</span>
+      <div class="url">/hq/runbook/#emergency</div>
+      <div class="name">Emergency commands</div>
+      <div class="desc">Server unreachable, can't SSH, mail down, fail2ban locked you out. The "fix it now" page.</div>
     </a>
 
-    <a class="item" href="/admin/">
-      <span class="tag private">Private</span>
-      <div class="url">jonathanellis.dev/admin</div>
-      <div class="name">Server ops handbook</div>
-      <div class="desc">Sticky sidebar reference of every command for emergencies, mail diagnostics, fail2ban, SSL renewal, Brevo relay, Hestia CLI, Coolify deploys.</div>
+    <a class="item" href="/hq/runbook/#vitals">
+      <span class="tag">Health</span>
+      <div class="url">/hq/runbook/#vitals</div>
+      <div class="name">Server vitals + health check</div>
+      <div class="desc">Quick diagnostic block — disk, memory, services, mail queue, fail2ban status.</div>
     </a>
 
-    <a class="item" href="/admin/teamabsolute-dns/">
-      <span class="tag private">Private</span>
-      <div class="url">jonathanellis.dev/admin/teamabsolute-dns</div>
+    <a class="item" href="/hq/runbook/#new-domain">
+      <span class="tag gold">Email · onboard</span>
+      <div class="url">/hq/runbook/#new-domain</div>
+      <div class="name">Add a new email domain</div>
+      <div class="desc">Full procedure: Hestia CLI, DNS records, DKIM, SSL extension via DNS-01.</div>
+    </a>
+
+    <a class="item" href="/hq/runbook/#new-mailbox">
+      <span class="tag gold">Email · mailbox</span>
+      <div class="url">/hq/runbook/#new-mailbox</div>
+      <div class="name">Add a new mailbox</div>
+      <div class="desc">v-add-mail-account command. Quota, password formats, single-quoted password gotchas.</div>
+    </a>
+
+    <a class="item" href="/hq/runbook/#migrate">
+      <span class="tag gold">Email · migrate</span>
+      <div class="url">/hq/runbook/#migrate</div>
+      <div class="name">Migrate mail in</div>
+      <div class="desc">imapsync via Docker. Canonical command shape that worked for MXroute + GoDaddy.</div>
+    </a>
+
+    <a class="item" href="/hq/runbook/#mail-diagnose">
+      <span class="tag gold">Email · diagnose</span>
+      <div class="url">/hq/runbook/#mail-diagnose</div>
+      <div class="name">Diagnose mail issues</div>
+      <div class="desc">Read mainlog, rejectlog, queue. Find why a specific message isn't flowing.</div>
+    </a>
+
+    <a class="item" href="/hq/runbook/#brevo">
+      <span class="tag gold">Email · relay</span>
+      <div class="url">/hq/runbook/#brevo</div>
+      <div class="name">Brevo SMTP relay</div>
+      <div class="desc">Outbound through Brevo. Authentication, sender verification, when to add a domain.</div>
+    </a>
+
+    <a class="item" href="/hq/runbook/#dns-templates">
+      <span class="tag gold">Email · DNS</span>
+      <div class="url">/hq/runbook/#dns-templates</div>
+      <div class="name">DNS templates per new domain</div>
+      <div class="desc">MX, SPF, DKIM, DMARC values you copy into Cloudflare for any new mail domain.</div>
+    </a>
+
+    <a class="item" href="/hq/runbook/#ssl-renew">
+      <span class="tag blue">SSL</span>
+      <div class="url">/hq/runbook/#ssl-renew</div>
+      <div class="name">SSL — renew or expand</div>
+      <div class="desc">Multi-SAN certbot DNS-01. Critical: do NOT run v-add-letsencrypt-host (breaks symlinks).</div>
+    </a>
+
+    <a class="item" href="/hq/runbook/#ssl-verify">
+      <span class="tag blue">SSL</span>
+      <div class="url">/hq/runbook/#ssl-verify</div>
+      <div class="name">Verify cert</div>
+      <div class="desc">openssl s_client one-liner to check SAN and expiry on any mail port.</div>
+    </a>
+
+    <a class="item" href="/hq/runbook/#dkim">
+      <span class="tag blue">SSL</span>
+      <div class="url">/hq/runbook/#dkim</div>
+      <div class="name">Get DKIM public key for any domain</div>
+      <div class="desc">Read the Hestia-generated DKIM TXT value to paste into Cloudflare.</div>
+    </a>
+
+    <a class="item" href="/hq/runbook/#fail2ban">
+      <span class="tag private">Security</span>
+      <div class="url">/hq/runbook/#fail2ban</div>
+      <div class="name">fail2ban — unban yourself</div>
+      <div class="desc">Got locked out by Starlink rotation. Unban + permanent /24 whitelist.</div>
+    </a>
+
+    <a class="item" href="/hq/runbook/#services">
+      <span class="tag">Ops</span>
+      <div class="url">/hq/runbook/#services</div>
+      <div class="name">Services — status &amp; restart</div>
+      <div class="desc">systemctl for exim4, dovecot, fail2ban, nginx, hestia panel.</div>
+    </a>
+
+    <a class="item" href="/hq/runbook/#coolify">
+      <span class="tag">Coolify</span>
+      <div class="url">/hq/runbook/#coolify</div>
+      <div class="name">Coolify operations</div>
+      <div class="desc">Adding apps, branch settings (master vs main), Traefik routing, redeploy.</div>
+    </a>
+
+    <a class="item" href="/hq/runbook/#deploy-main">
+      <span class="tag">Deploy</span>
+      <div class="url">/hq/runbook/#deploy-main</div>
+      <div class="name">Deploy — jonathanellis.dev</div>
+      <div class="desc">Git push commands for the main-site repo. Typical commit messages.</div>
+    </a>
+
+    <a class="item" href="/hq/runbook/#deploy-rustdesk">
+      <span class="tag">Deploy</span>
+      <div class="url">/hq/runbook/#deploy-rustdesk</div>
+      <div class="name">Deploy — rustdesk-pages</div>
+      <div class="desc">Git push for RustDesk install page repo.</div>
+    </a>
+
+    <a class="item" href="/hq/runbook/#errors">
+      <span class="tag">Reference</span>
+      <div class="url">/hq/runbook/#errors</div>
+      <div class="name">Common errors &amp; fixes</div>
+      <div class="desc">"nginx restart failed", "invalid quota format", DNSBL false rejects, etc.</div>
+    </a>
+
+    <a class="item" href="/hq/runbook/#hestia-cli">
+      <span class="tag">Reference</span>
+      <div class="url">/hq/runbook/#hestia-cli</div>
+      <div class="name">HestiaCP CLI cheatsheet</div>
+      <div class="desc">Every v-* command you've used, with arg patterns.</div>
+    </a>
+
+    <a class="item" href="/hq/runbook/#paths">
+      <span class="tag">Reference</span>
+      <div class="url">/hq/runbook/#paths</div>
+      <div class="name">Paths cheatsheet</div>
+      <div class="desc">Where logs, configs, certs, mailboxes live on disk.</div>
+    </a>
+
+  </div>
+
+  <!-- ============== ADMIN TOOLS ============== -->
+  <h2 id="admin">Admin <em>tools</em> <span class="count">— interactive utilities &amp; deep-dive references</span></h2>
+  <div class="grid">
+
+    <a class="item" href="/newemailaccount/">
+      <span class="tag gold">Tool</span>
+      <div class="url">/newemailaccount</div>
+      <div class="name">Self-service mailbox creation</div>
+      <div class="desc">Form-based UI to add mailboxes (and domains) without SSH. Frontend complete; backend deploys next session.</div>
+    </a>
+
+    <a class="item" href="/hq/dns/teamabsolute/">
+      <span class="tag private">DNS Ref</span>
+      <div class="url">/hq/dns/teamabsolute</div>
       <div class="name">teamabsolute.ca DNS migration</div>
-      <div class="desc">DELETE / UPDATE / ADD reference for moving teamabsolute.ca off MXroute. Color-coded with copy buttons.</div>
+      <div class="desc">DELETE / UPDATE / ADD color-coded reference for migrating teamabsolute.ca off MXroute. Copy buttons on every value.</div>
+    </a>
+
+    <a class="item" href="https://server.jonathanellis.dev:8083/" target="_blank" rel="noopener">
+      <span class="tag private">Hestia</span>
+      <div class="url">server.jonathanellis.dev:8083</div>
+      <div class="name">Hestia control panel (GUI)</div>
+      <div class="desc">Mail accounts, DNS, fail2ban GUI, package management. Direct port :8083 (Coolify owns 80/443).</div>
     </a>
 
   </div>
