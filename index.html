@@ -175,11 +175,70 @@
     border-bottom-color: var(--accent);
   }
 
-  @media (max-width: 640px) {
-    .topbar { padding: 14px 16px; }
-    .toplinks { gap: 16px; }
-    .toplinks a, .toplinks button { font-size: 10px; }
-    .brand .word { font-size: 11px; }
+  /* Mobile hamburger */
+  .hamburger {
+    display: none;
+    appearance: none;
+    background: var(--panel-bg);
+    border: 1px solid var(--line);
+    width: 40px; height: 40px;
+    border-radius: 8px;
+    cursor: pointer;
+    position: relative;
+    backdrop-filter: blur(var(--panel-blur));
+    -webkit-backdrop-filter: blur(var(--panel-blur));
+  }
+  .hamburger span {
+    display: block;
+    position: absolute;
+    left: 11px; right: 11px;
+    height: 1.5px;
+    background: var(--text-dim);
+    transition: all 0.2s;
+  }
+  .hamburger span:nth-child(1) { top: 13px; }
+  .hamburger span:nth-child(2) { top: 19px; }
+  .hamburger span:nth-child(3) { top: 25px; }
+  .hamburger.open span:nth-child(1) { top: 19px; transform: rotate(45deg); }
+  .hamburger.open span:nth-child(2) { opacity: 0; }
+  .hamburger.open span:nth-child(3) { top: 19px; transform: rotate(-45deg); }
+
+  @media (max-width: 720px) {
+    .topbar { padding: 14px 14px; }
+    .brand { display: none !important; }
+    .hamburger { display: block; }
+    .toplinks {
+      position: fixed;
+      top: 64px;
+      right: 14px;
+      flex-direction: column;
+      gap: 0;
+      padding: 6px 0;
+      background: var(--panel-bg);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      backdrop-filter: blur(var(--panel-blur));
+      -webkit-backdrop-filter: blur(var(--panel-blur));
+      min-width: 160px;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-8px);
+      transition: opacity 0.2s, visibility 0.2s, transform 0.2s;
+    }
+    .toplinks.open {
+      opacity: 1; visibility: visible; transform: translateY(0);
+    }
+    .toplinks a, .toplinks button {
+      width: 100%;
+      padding: 12px 18px;
+      border: none;
+      border-bottom: 1px solid var(--line);
+      text-align: right;
+      font-size: 11px;
+      letter-spacing: 0.16em;
+    }
+    .toplinks a:last-child, .toplinks button:last-child { border-bottom: none; }
+    .toplinks a:hover, .toplinks button:hover { border-bottom-color: var(--line); background: rgba(0, 230, 64, 0.04); }
   }
 
   /* ===========================================
@@ -242,23 +301,94 @@
   }
   #skin-rail button.active .num { color: var(--accent); }
 
+  /* Mobile collapsible panel system */
+  .edge-tab {
+    display: none;
+    position: fixed;
+    z-index: 7;
+    background: var(--panel-bg);
+    border: 1px solid var(--line);
+    backdrop-filter: blur(var(--panel-blur));
+    -webkit-backdrop-filter: blur(var(--panel-blur));
+    padding: 10px 8px;
+    cursor: pointer;
+    color: var(--text-dim);
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+  }
+  .edge-tab.right {
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%) rotate(180deg);
+    border-radius: 6px 0 0 6px;
+    border-right: none;
+  }
+  .edge-tab.left {
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    border-radius: 0 6px 6px 0;
+    border-left: none;
+    writing-mode: vertical-lr;
+    transform: translateY(-50%);
+  }
+  .edge-tab.bottom-left {
+    left: 0;
+    bottom: 90px;
+    border-radius: 0 6px 6px 0;
+    border-left: none;
+    writing-mode: horizontal-tb;
+    transform: none;
+    padding: 7px 12px;
+    font-size: 9px;
+  }
+  .edge-tab.bottom-right {
+    right: 0;
+    bottom: 90px;
+    border-radius: 6px 0 0 6px;
+    border-right: none;
+    writing-mode: horizontal-tb;
+    transform: none;
+    padding: 7px 12px;
+    font-size: 9px;
+  }
+  .edge-tab.active { color: var(--accent); border-color: rgba(0, 230, 64, 0.4); }
+
   @media (max-width: 720px) {
+    /* Skin rail → right edge collapsible */
+    .edge-tab { display: block; }
     #skin-rail {
-      top: auto;
-      bottom: 90px;
-      right: 50%;
-      transform: translateX(50%);
-      flex-direction: row;
-      gap: 2px;
-      padding: 4px;
-      max-width: calc(100vw - 16px);
-      overflow-x: auto;
+      top: 50%;
+      right: 0;
+      transform: translateY(-50%) translateX(100%);
+      transition: transform 0.3s ease;
+      flex-direction: column;
+      gap: 4px;
+      padding: 12px 10px 12px 14px;
+      border-radius: 8px 0 0 8px;
+      border-right: none;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+    #skin-rail.open { transform: translateY(-50%) translateX(0); }
+    #skin-rail.flash {
+      transform: translateY(-50%) translateX(0);
+      animation: flashPanel 1.6s ease-out;
+    }
+    @keyframes flashPanel {
+      0%   { transform: translateY(-50%) translateX(0); }
+      70%  { transform: translateY(-50%) translateX(0); }
+      100% { transform: translateY(-50%) translateX(100%); }
     }
     #skin-rail button {
-      min-width: auto;
-      padding: 5px 9px;
+      min-width: 130px;
+      padding: 8px 12px;
+      text-align: left;
     }
-    #skin-rail button .num { display: none; }
   }
 
   /* ===========================================
@@ -386,15 +516,34 @@
   .control select:focus { outline: none; border-color: var(--accent); }
 
   @media (max-width: 720px) {
+    /* Params panel → left edge collapsible */
     #params {
-      top: auto;
-      bottom: 130px;
-      left: 12px;
-      right: 12px;
-      width: auto;
-      transform: translateY(8px);
+      top: 50%;
+      left: 0;
+      width: 230px;
+      transform: translateY(-50%) translateX(-100%);
+      transition: transform 0.3s ease, opacity 0.3s ease;
+      opacity: 1;
+      border-radius: 0 8px 8px 0;
+      border-left: none;
+      max-height: 70vh;
+      overflow-y: auto;
     }
-    #params.show { transform: translateY(0); }
+    #params.show {
+      pointer-events: auto;
+    }
+    #params.open {
+      transform: translateY(-50%) translateX(0);
+      opacity: 1;
+    }
+    #params.flash {
+      transform: translateY(-50%) translateX(0);
+      animation: flashPanelLeft 1.6s ease-out;
+    }
+    @keyframes flashPanelLeft {
+      0%, 70% { transform: translateY(-50%) translateX(0); }
+      100%    { transform: translateY(-50%) translateX(-100%); }
+    }
   }
 
   /* ===========================================
@@ -524,11 +673,64 @@
   }
 
   @media (max-width: 720px) {
+    /* J controls → bottom-left collapsible */
     #jctrl {
       bottom: 12px;
-      left: 12px;
-      right: 12px;
-      width: auto;
+      left: 0;
+      width: 230px;
+      transform: translateX(-100%);
+      transition: transform 0.3s ease;
+      border-radius: 0 8px 8px 0;
+      border-left: none;
+    }
+    #jctrl.open { transform: translateX(0); }
+  }
+
+  /* ===========================================
+     BG PARAMS PANEL — above BG selector
+     =========================================== */
+  #bg-params {
+    position: fixed;
+    bottom: 70px;
+    right: 24px;
+    z-index: 6;
+    width: 220px;
+    padding: 14px 16px;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 0.3s, transform 0.3s;
+    pointer-events: none;
+  }
+  #bg-params.show {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+  #bg-params .header {
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--line);
+  }
+  #bg-params .header .title {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+  @media (max-width: 720px) {
+    #bg-params {
+      bottom: auto;
+      top: 50%;
+      right: 0;
+      width: 220px;
+      transform: translateY(-50%) translateX(100%);
+      transition: transform 0.3s;
+      border-radius: 8px 0 0 8px;
+      border-right: none;
+    }
+    #bg-params.show.open {
+      transform: translateY(-50%) translateX(0);
     }
   }
 
@@ -574,14 +776,20 @@
     border-color: rgba(0, 230, 64, 0.4);
   }
   @media (max-width: 720px) {
+    /* BG selector → bottom-right collapsible */
     #bg-select {
-      bottom: auto;
-      top: 60px;
-      right: 12px;
-      left: 12px;
-      flex-wrap: wrap;
-      justify-content: center;
+      bottom: 12px;
+      right: 0;
+      transform: translateX(100%);
+      transition: transform 0.3s ease;
+      border-radius: 8px 0 0 8px;
+      border-right: none;
+      flex-wrap: nowrap;
+      justify-content: flex-start;
+      max-width: calc(100vw - 16px);
+      overflow-x: auto;
     }
+    #bg-select.open { transform: translateX(0); }
   }
 
   /* ===========================================
@@ -763,12 +971,33 @@
     </span>
     <span class="word">jonathan<em>ellis</em>.dev</span>
   </a>
-  <nav class="toplinks">
+  <button class="hamburger" id="hamburger" aria-label="Menu" aria-expanded="false">
+    <span></span><span></span><span></span>
+  </button>
+  <nav class="toplinks" id="toplinks">
     <a href="https://jonathanellis.ca" target="_blank" rel="noopener">Portfolio</a>
     <a href="https://jonathanellis.work" target="_blank" rel="noopener">Work</a>
     <button id="open-contact">Contact</button>
   </nav>
 </div>
+
+<script>
+  // Hamburger toggle
+  const ham = document.getElementById('hamburger');
+  const tl = document.getElementById('toplinks');
+  ham.addEventListener('click', () => {
+    const open = ham.classList.toggle('open');
+    tl.classList.toggle('open', open);
+    ham.setAttribute('aria-expanded', open);
+  });
+  document.addEventListener('click', (e) => {
+    if (!ham.contains(e.target) && !tl.contains(e.target)) {
+      ham.classList.remove('open');
+      tl.classList.remove('open');
+      ham.setAttribute('aria-expanded', 'false');
+    }
+  });
+</script>
 
 <!-- ===========================================
      SKIN RAIL
@@ -778,7 +1007,7 @@
   <button data-skin="lasers"><span class="num">02</span>Lasers</button>
   <button data-skin="lava"><span class="num">03</span>Lava</button>
   <button data-skin="water"><span class="num">04</span>Water</button>
-  <button data-skin="iridescent"><span class="num">05</span>Iridescent</button>
+  <button data-skin="vapour"><span class="num">05</span>Vapour</button>
   <button data-skin="stones"><span class="num">06</span>Stones</button>
   <button data-skin="fuzzy"><span class="num">07</span>Fuzzy</button>
   <button data-skin="camo"><span class="num">08</span>Camo</button>
@@ -845,9 +1074,66 @@
 </div>
 
 <!-- ===========================================
-     KEYBOARD HINTS
+     BG PARAM PANEL — sits above BG selector
+     =========================================== -->
+<aside id="bg-params" class="panel">
+  <div class="header">
+    <span class="title">BG Params</span>
+  </div>
+  <div id="bg-param-body"></div>
+</aside>
+
+<!-- ===========================================
+     EDGE TABS — only show on mobile
+     =========================================== -->
+<button class="edge-tab right" data-target="skin-rail" aria-label="Skins">Skins</button>
+<button class="edge-tab left" data-target="params" aria-label="Params">Params</button>
+<button class="edge-tab bottom-left" data-target="jctrl" aria-label="Controls">Spin / TV</button>
+<button class="edge-tab bottom-right" data-target="bg-select" aria-label="Background">BG</button>
+
+<!-- ===========================================
+     KEYBOARD HINTS — desktop only
      =========================================== -->
 <div id="keyhints"><kbd>1</kbd>–<kbd>9</kbd> skin · <kbd>B</kbd> bg · <kbd>Space</kbd> pause · <kbd>T</kbd> tv mode · <kbd>R</kbd> reset · <kbd>P</kbd> params</div>
+
+<script>
+  // Edge-tab toggle for mobile panels (allow only one open at a time on mobile)
+  document.querySelectorAll('.edge-tab').forEach(tab => {
+    tab.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const id = tab.dataset.target;
+      const panel = document.getElementById(id);
+      if (!panel) return;
+      const wasOpen = panel.classList.contains('open');
+      // Close all panels
+      document.querySelectorAll('#skin-rail, #params, #jctrl, #bg-select').forEach(p => p.classList.remove('open'));
+      document.querySelectorAll('.edge-tab').forEach(t => t.classList.remove('active'));
+      if (!wasOpen) {
+        panel.classList.add('open');
+        tab.classList.add('active');
+      }
+    });
+  });
+  // Close panels when tapping outside
+  document.addEventListener('click', (e) => {
+    if (window.innerWidth > 720) return;
+    const isTab = e.target.closest('.edge-tab');
+    const isPanel = e.target.closest('#skin-rail, #params, #jctrl, #bg-select');
+    if (!isTab && !isPanel) {
+      document.querySelectorAll('#skin-rail, #params, #jctrl, #bg-select').forEach(p => p.classList.remove('open'));
+      document.querySelectorAll('.edge-tab').forEach(t => t.classList.remove('active'));
+    }
+  });
+  // Flash skin rail when skin auto-changes (TV mode)
+  window.addEventListener('jdev:skinchange', () => {
+    if (window.innerWidth > 720) return;
+    const rail = document.getElementById('skin-rail');
+    rail.classList.remove('flash');
+    void rail.offsetWidth;
+    rail.classList.add('flash');
+    setTimeout(() => rail.classList.remove('flash'), 1700);
+  });
+</script>
 
 <!-- ===========================================
      CONTACT MODAL

@@ -34,12 +34,13 @@ const state = (() => {
       skin: s.skin || DEFAULT_SKIN,
       bg: s.bg || DEFAULT_BG,
       params: s.params || {},
+      bgParams: s.bgParams || {},
       speed: typeof s.speed === 'number' ? s.speed : 1.0,
       paused: !!s.paused,
       tv: !!s.tv,
     };
   } catch {
-    return { skin: DEFAULT_SKIN, bg: DEFAULT_BG, params: {}, speed: 1.0, paused: false, tv: false };
+    return { skin: DEFAULT_SKIN, bg: DEFAULT_BG, params: {}, bgParams: {}, speed: 1.0, paused: false, tv: false };
   }
 })();
 function saveState() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch {} }
@@ -195,22 +196,23 @@ new GLTFLoader().load(
    ────────────────────────────────────────────────────────────── */
 const SKINS = {
 
-  /* ───── 01 · METALLIC — OddCommon-style: brushed chrome + sweeping rainbow highlight band */
+  /* ───── 01 · METALLIC — green by default; tint slider cycles full color wheel */
   metallic: {
     label: 'Metallic',
-    params: { roughness: 0.18, clearcoat: 0.85, shimmer: 0.6, hue: 0.55, sweep: 0.5 },
+    params: { roughness: 0.15, clearcoat: 0.9, shimmer: 0.7, sweep: 0.6, hue: 0.33, autoTint: 1 },
     post: { bloom: false },
     make(p) {
+      // Default = green (hue 0.33). Slider goes 0..1 = full color wheel.
       const mat = new THREE.MeshPhysicalMaterial({
-        color: new THREE.Color().setHSL(0, 0, 0.96),
+        color: new THREE.Color().setHSL(p.hue, 0.85, 0.55),
         metalness: 1.0,
         roughness: p.roughness,
         clearcoat: p.clearcoat,
-        clearcoatRoughness: 0.03,
-        envMapIntensity: 1.7,
-        iridescence: p.shimmer * 0.7,
+        clearcoatRoughness: 0.02,
+        envMapIntensity: 1.8,
+        iridescence: p.shimmer * 0.8,
         iridescenceIOR: 1.45,
-        iridescenceThicknessRange: [200, 800],
+        iridescenceThicknessRange: [200, 900],
       });
       // Custom shader injection: sweeping highlight band that rides over the surface
       mat.onBeforeCompile = (shader) => {
@@ -258,33 +260,38 @@ const SKINS = {
       return mat;
     },
     controls: [
-      { key: 'roughness', label: 'Roughness', min: 0, max: 0.5, step: 0.01 },
+      { key: 'roughness', label: 'Roughness', min: 0, max: 0.6, step: 0.01 },
       { key: 'clearcoat', label: 'Clearcoat', min: 0, max: 1, step: 0.01 },
       { key: 'shimmer', label: 'Shimmer', min: 0, max: 1, step: 0.01 },
       { key: 'sweep', label: 'Sweep band', min: 0, max: 1, step: 0.01 },
       { key: 'hue', label: 'Tint', min: 0, max: 1, step: 0.01 },
+      { key: 'autoTint', label: 'Cycle colors', min: 0, max: 1, step: 1 },
     ],
     update(p, mat) {
       mat.roughness = p.roughness;
       mat.clearcoat = p.clearcoat;
-      mat.iridescence = p.shimmer * 0.7;
-      mat.color.setHSL(p.hue, 0.05, 0.96);
+      mat.iridescence = p.shimmer * 0.8;
+      // If autoTint is off, use the slider hue immediately
+      if (!p.autoTint) mat.color.setHSL(p.hue, 0.85, 0.55);
       mat.userData.shimmer = p.shimmer;
       mat.userData.sweep = p.sweep;
+      mat.userData.autoTint = p.autoTint;
+      mat.userData.manualHue = p.hue;
       if (mat.userData.shader) mat.userData.shader.uniforms.uSweep.value = p.sweep;
     },
     tick(t, mat) {
-      const sh = mat.userData.shimmer ?? 0.6;
-      // Slow envMap breathing
-      mat.envMapIntensity = 1.6 + Math.sin(t * 0.4) * 0.25;
-      // Iridescence thickness oscillates — color band shifts across surface
-      const lo = 200 + Math.sin(t * 0.25) * 120;
-      const hi = 800 + Math.cos(t * 0.3) * 250;
+      const sh = mat.userData.shimmer ?? 0.7;
+      mat.envMapIntensity = 1.7 + Math.sin(t * 0.4) * 0.3;
+      const lo = 200 + Math.sin(t * 0.25) * 130;
+      const hi = 900 + Math.cos(t * 0.3) * 280;
       mat.iridescenceThicknessRange = [lo, hi];
-      mat.iridescence = sh * (0.5 + 0.2 * Math.sin(t * 0.6));
-      // Sweep band uniform
+      mat.iridescence = sh * (0.55 + 0.25 * Math.sin(t * 0.6));
+      // Color cycle through full hue wheel — completes a full cycle every ~24 seconds
+      if (mat.userData.autoTint) {
+        const cycledHue = (t * 0.04 + (mat.userData.manualHue ?? 0.33)) % 1;
+        mat.color.setHSL(cycledHue, 0.85, 0.55);
+      }
       if (mat.userData.shader) mat.userData.shader.uniforms.uTime.value = t;
-      // Orbiting accent light — moves highlights across the surface
       const r = 2.8;
       orbLight.position.set(Math.cos(t * 0.4) * r, Math.sin(t * 0.25) * 1.4, Math.sin(t * 0.4) * r);
       orbLight.intensity = 1.6 + Math.sin(t * 0.6) * 0.7;
@@ -294,53 +301,68 @@ const SKINS = {
     onLeave() { orbLight.intensity = 0.0; },
   },
 
-  /* ───── 02 · LASERS — multi-axis grid, wireframe accent, no glitching */
+  /* ───── 02 · LASERS — anti-aliased holographic grid, no aliasing/glitching */
   lasers: {
     label: 'Lasers',
-    params: { speed: 0.6, density: 18, hue: 0.33, glow: 1.2 },
-    post: { bloom: true, bloomStrength: 1.0, bloomRadius: 0.5, bloomThreshold: 0.45 },
+    params: { speed: 0.4, spacing: 0.10, glow: 1.0, hue: 0.33 },
+    post: { bloom: true, bloomStrength: 0.8, bloomRadius: 0.7, bloomThreshold: 0.5 },
     make(p) {
       const u = {
-        time: { value: 0 }, speed: { value: p.speed }, density: { value: p.density },
-        hue: { value: p.hue }, glow: { value: p.glow },
+        time: { value: 0 }, speed: { value: p.speed },
+        spacing: { value: p.spacing }, glow: { value: p.glow }, hue: { value: p.hue },
       };
       const mat = new THREE.ShaderMaterial({
         uniforms: u,
+        glslVersion: THREE.GLSL3,
         vertexShader: `
-          varying vec3 vP; varying vec3 vN; varying vec3 vWorld;
+          out vec3 vP; out vec3 vN; out vec3 vView;
           void main(){
             vP = position;
             vN = normalize(normalMatrix * normal);
-            vec4 wp = modelMatrix * vec4(position, 1.0);
-            vWorld = wp.xyz;
-            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            vec4 mv = modelViewMatrix * vec4(position, 1.0);
+            vView = normalize(-mv.xyz);
+            gl_Position = projectionMatrix * mv;
           }`,
         fragmentShader: GLSL_HSL + `
-          uniform float time, speed, density, hue, glow;
-          varying vec3 vP; varying vec3 vN; varying vec3 vWorld;
-          // Stable grid laser: bands move smoothly along Y, no fract() banding artifacts
-          float band(float coord, float density, float t, float phase) {
-            float v = coord * density - t * speed * 3.0 + phase;
-            // Smooth periodic peak — narrow gaussian per period
-            float p = sin(v) * 0.5 + 0.5;          // 0..1
-            return pow(p, 24.0);
+          in vec3 vP; in vec3 vN; in vec3 vView;
+          uniform float time, speed, spacing, glow, hue;
+          out vec4 fragColor;
+
+          // Anti-aliased horizontal line at periodic offset.
+          // Returns 0..1 line intensity that's smoothed at sub-pixel level.
+          float aaLine(float coord, float spacing, float thickness) {
+            // Distance to nearest line in coord-space
+            float n = coord / spacing;
+            float dist = abs(fract(n) - 0.5);     // 0 at line center, 0.5 between lines
+            // Use derivatives for proper anti-aliasing
+            float w = fwidth(n) * 1.5;
+            // Width of the band in normalized units
+            float halfWidth = thickness;
+            return 1.0 - smoothstep(halfWidth - w, halfWidth + w, dist);
           }
+
           void main(){
-            // Use object-space coords so bands are stable on the J's surface
-            float bY = band(vP.y, density, time, 0.0);
-            float bX = band(vP.x, density * 0.8, time * 0.7, 1.7);
-            // Cross-grid (sparse, moves slower)
-            float grid = bY + bX * 0.55;
-            // Edge fresnel — outline rim for that holographic feel
-            float fres = pow(1.0 - abs(dot(normalize(vN), normalize(cameraPosition - vWorld))), 2.0);
-            // Color drifts very slowly so it doesn't strobe
-            float h = hue + sin(time * 0.05) * 0.05 + vP.y * 0.04;
-            vec3 col = hsl2rgb(h, 1.0, 0.55);
-            vec3 rim = hsl2rgb(h + 0.5, 1.0, 0.6);
-            vec3 final = col * grid * glow + rim * fres * 0.5;
-            // Faint base so the J silhouette reads even between bands
-            final += hsl2rgb(h, 0.8, 0.18) * 0.06;
-            gl_FragColor = vec4(final, 1.0);
+            // One axis only — clean horizontal scan, slow vertical drift
+            float coord = vP.y - time * speed * 0.5;
+            float lineMain = aaLine(coord, spacing, 0.06);
+            // Secondary thin lines between, dimmer
+            float lineFine = aaLine(coord + spacing * 0.5, spacing, 0.02) * 0.4;
+
+            // Edge fresnel — bright rim
+            float fres = pow(1.0 - abs(dot(normalize(vN), vView)), 2.5);
+
+            // Color: very slow hue drift, no high-frequency change
+            float h = hue + sin(time * 0.04) * 0.06;
+            vec3 lineCol = hsl2rgb(h, 1.0, 0.60);
+            vec3 rimCol  = hsl2rgb(h + 0.5, 0.9, 0.55);
+
+            // Final: base dim glow + sharp lines + rim
+            vec3 col = vec3(0.0);
+            col += hsl2rgb(h, 0.9, 0.10) * 0.08;            // very dim base reads silhouette
+            col += lineCol * (lineMain + lineFine) * glow;
+            col += rimCol * fres * 0.45;
+
+            fragColor = vec4(col, 1.0);
           }`,
       });
       mat.userData.uniforms = u;
@@ -348,23 +370,23 @@ const SKINS = {
     },
     controls: [
       { key: 'speed', label: 'Scan speed', min: 0, max: 2, step: 0.01 },
-      { key: 'density', label: 'Density', min: 4, max: 50, step: 1 },
+      { key: 'spacing', label: 'Line spacing', min: 0.04, max: 0.4, step: 0.005 },
+      { key: 'glow', label: 'Glow', min: 0.4, max: 2.5, step: 0.05 },
       { key: 'hue', label: 'Color', min: 0, max: 1, step: 0.01 },
-      { key: 'glow', label: 'Glow', min: 0.4, max: 3, step: 0.1 },
     ],
     update(p, mat) {
       const u = mat.userData.uniforms;
-      u.speed.value = p.speed; u.density.value = p.density;
-      u.hue.value = p.hue; u.glow.value = p.glow;
+      u.speed.value = p.speed; u.spacing.value = p.spacing;
+      u.glow.value = p.glow; u.hue.value = p.hue;
     },
     tick(t, mat) { mat.userData.uniforms.time.value = t; },
   },
 
-  /* ───── 03 · LAVA — black charcoal crust, hot magma only in deep cracks */
+  /* ───── 03 · LAVA — true volcanic look: black rock, glowing red-orange magma in cracks, flowing */
   lava: {
     label: 'Lava',
-    params: { heat: 0.5, flow: 0.4, cracks: 0.85, chunks: 0.7 },
-    post: { bloom: true, bloomStrength: 0.6, bloomRadius: 0.5, bloomThreshold: 0.75 },
+    params: { heat: 0.4, flow: 0.5, cracks: 0.7, chunks: 0.6 },
+    post: { bloom: true, bloomStrength: 0.5, bloomRadius: 0.4, bloomThreshold: 0.85 },
     make(p) {
       const u = {
         time: { value: 0 }, heat: { value: p.heat }, flow: { value: p.flow },
@@ -374,53 +396,73 @@ const SKINS = {
         uniforms: u,
         vertexShader: GLSL_VALUE_NOISE + `
           uniform float time, flow, cracks, chunks;
-          varying vec3 vP; varying vec3 vN; varying float vCharcoal; varying float vCrack;
+          varying vec3 vP; varying vec3 vN; varying float vChunk; varying float vCrackDepth;
           void main(){
-            float t = time * (0.15 + flow * 0.3);
-            // Big bumps for charcoal chunks — outward
-            float bigBumps = fbm3(position * 4.0 + vec3(t * 0.3, 0.0, t * 0.2));
-            float charcoal = smoothstep(0.5, 0.85, bigBumps);
-            // Sharp cracks — thin valleys (inward displacement)
-            float crackPattern = abs(vnoise3(position * 8.0 + vec3(0.0, t * 0.4, 0.0)) - 0.5) * 2.0;
-            float crackMask = pow(1.0 - smoothstep(0.0, 0.12, crackPattern), 5.0);
-            float secondCrack = abs(vnoise3(position * 5.0 + vec3(t * 0.3, 0.0, 0.0)) - 0.5) * 2.0;
-            crackMask = max(crackMask, pow(1.0 - smoothstep(0.0, 0.10, secondCrack), 5.0) * 0.7);
-            // Displacement: outward chunks + inward cracks
-            float disp = charcoal * 0.06 * chunks - crackMask * 0.10 * cracks;
+            float t = time * (0.10 + flow * 0.20);
+            // Charcoal chunks — large outward bumps with hard threshold (rocky look)
+            float chunkNoise = fbm3(position * 3.0 + vec3(t * 0.15, 0.0, t * 0.1));
+            float chunk = smoothstep(0.45, 0.65, chunkNoise);
+            // Crack pattern — thin valleys for magma. Use Worley-like distance.
+            // Two octaves combined for irregular crack networks.
+            float c1 = abs(vnoise3(position * 7.0 + vec3(t * 0.3, 0.0, 0.0)) * 2.0 - 1.0);
+            float c2 = abs(vnoise3(position * 4.0 + vec3(0.0, t * 0.2, t * 0.15)) * 2.0 - 1.0);
+            float crackBase = min(c1, c2);
+            float crackMask = pow(1.0 - smoothstep(0.0, 0.08, crackBase), 3.0);
+            // Displacement: chunks bulge out, cracks recede
+            float disp = chunk * 0.08 * chunks - crackMask * 0.06 * cracks;
             vec3 d = position + normal * disp;
-            vCharcoal = charcoal;
-            vCrack = crackMask;
+            vChunk = chunk;
+            vCrackDepth = crackMask;
             vP = position;
             vN = normalize(normalMatrix * normal);
             gl_Position = projectionMatrix * modelViewMatrix * vec4(d, 1.0);
           }`,
         fragmentShader: GLSL_VALUE_NOISE + GLSL_HSL + `
-          uniform float time, heat, cracks;
-          varying vec3 vP; varying vec3 vN; varying float vCharcoal; varying float vCrack;
+          uniform float time, heat, flow;
+          varying vec3 vP; varying vec3 vN; varying float vChunk; varying float vCrackDepth;
           void main(){
-            float t = time * 0.4;
-            // Magma flow noise — used to color the cracks (orange-yellow swirl)
-            float magma = fbm3(vP * 6.0 + vec3(0.0, t, t * 0.5));
-            // Black charcoal base — very dark, slight roughness texture
-            float surfaceNoise = fbm3(vP * 18.0);
-            vec3 charcoalCol = vec3(0.025, 0.018, 0.015) + vec3(0.04, 0.03, 0.025) * surfaceNoise;
-            charcoalCol = mix(charcoalCol, vec3(0.06, 0.05, 0.04), vCharcoal);
-            // Hot magma color — only in deep cracks. Bright orange→yellow gradient.
-            float hue = 0.025 + magma * 0.05;
-            float L = 0.45 + magma * 0.25 + heat * 0.2;
-            vec3 magmaCol = hsl2rgb(hue, 1.0, clamp(L, 0.3, 0.7));
-            // Hot rim along crack edges
-            magmaCol += vec3(1.0, 0.4, 0.1) * 0.4 * heat;
-            // Mix: charcoal base, magma in cracks (cracks are sharp & narrow)
-            float crackFill = vCrack * (0.5 + heat * 0.5);
-            vec3 col = mix(charcoalCol, magmaCol, crackFill);
-            // Faint heat haze around very hot areas
-            float halo = smoothstep(0.6, 1.0, vCrack) * heat * 0.3;
-            col += vec3(0.6, 0.2, 0.05) * halo;
-            // Dim lambert lighting on the charcoal so the chunks read as 3D
+            float t = time * (0.25 + flow * 0.5);
+            // Flowing magma noise — advected over time so it looks like it's moving
+            vec3 flowOff = vec3(0.0, -t * 0.3, t * 0.15);
+            float magmaFlow = fbm3(vP * 8.0 + flowOff);
+            // Color stops along temperature gradient
+            // BLACK rock → DEEP RED → ORANGE → YELLOW (only when very deep+hot)
+            // Crack depth determines temperature reveal
+            float temp = vCrackDepth * (0.5 + heat * 0.7) + magmaFlow * vCrackDepth * 0.4;
+
+            // Base rock color: very dark with subtle texture variation
+            float rockTex = fbm3(vP * 28.0);
+            vec3 rock = vec3(0.020, 0.015, 0.013) + vec3(0.025) * rockTex;
+            // Bumpy chunks slightly lighter than smooth rock
+            rock = mix(rock, rock * 1.4, vChunk * 0.6);
+
+            // Magma gradient — red at low temp, orange/yellow at high
+            // 0..0.3 = invisible, 0.3..0.5 = deep red, 0.5..0.8 = orange, 0.8..1 = bright yellow
+            vec3 magma = vec3(0.0);
+            if (temp > 0.3) {
+              float t2 = smoothstep(0.3, 1.0, temp);
+              vec3 deepRed = vec3(0.35, 0.04, 0.0);     // low-temp red
+              vec3 orange  = vec3(0.95, 0.30, 0.05);    // mid magma
+              vec3 yellow  = vec3(1.00, 0.78, 0.20);    // peak heat
+              if (t2 < 0.5) magma = mix(deepRed, orange, t2 * 2.0);
+              else          magma = mix(orange, yellow, (t2 - 0.5) * 2.0);
+              // Boost magma brightness in deepest cracks (for bloom)
+              magma *= (1.0 + smoothstep(0.7, 1.0, temp) * 1.5);
+            }
+
+            // Mix: rock base, magma fills cracks
+            float magmaMask = smoothstep(0.30, 0.55, temp);
+            vec3 col = mix(rock, magma, magmaMask);
+
+            // Glow halo around hot edges — adds atmospheric warmth without making the J white
+            float halo = smoothstep(0.5, 0.9, temp) * heat;
+            col += vec3(0.6, 0.18, 0.04) * halo * 0.5;
+
+            // Lambert lighting on the rock parts only — don't dim glowing magma
             vec3 L_dir = normalize(vec3(0.5, 0.8, 0.6));
-            float diff = max(0.3, dot(normalize(vN), L_dir));
-            col *= mix(1.0, diff, 1.0 - crackFill); // don't dim the magma
+            float diff = max(0.25, dot(normalize(vN), L_dir));
+            col = mix(col * diff, col, magmaMask);
+
             gl_FragColor = vec4(col, 1.0);
           }`,
       });
@@ -430,7 +472,7 @@ const SKINS = {
     controls: [
       { key: 'heat', label: 'Heat', min: 0, max: 1, step: 0.01 },
       { key: 'flow', label: 'Flow', min: 0, max: 1, step: 0.01 },
-      { key: 'cracks', label: 'Cracks', min: 0.3, max: 1, step: 0.01 },
+      { key: 'cracks', label: 'Crack depth', min: 0.3, max: 1, step: 0.01 },
       { key: 'chunks', label: 'Chunks', min: 0, max: 1, step: 0.01 },
     ],
     update(p, mat) {
@@ -479,31 +521,74 @@ const SKINS = {
     tick(t, mat) { if (mat.userData.shader) mat.userData.shader.uniforms.uTime.value = t; },
   },
 
-  /* ───── 05 · IRIDESCENT */
-  iridescent: {
-    label: 'Iridescent',
-    params: { thickness: 400, intensity: 1.0, roughness: 0.05, base: 0.0 },
-    post: { bloom: false },
+  /* ───── 05 · VAPOUR — translucent flowing fog/cloud wrapping the J */
+  vapour: {
+    label: 'Vapour',
+    params: { density: 0.55, flow: 0.5, hue: 0.55, glow: 0.6 },
+    post: { bloom: true, bloomStrength: 0.5, bloomRadius: 0.9, bloomThreshold: 0.3 },
     make(p) {
-      return new THREE.MeshPhysicalMaterial({
-        color: 0xffffff, metalness: 0.4, roughness: p.roughness,
-        iridescence: p.intensity, iridescenceIOR: 1.3,
-        iridescenceThicknessRange: [100, p.thickness],
-        envMapIntensity: 1.4, clearcoat: 1.0, clearcoatRoughness: 0.0,
+      const u = {
+        time: { value: 0 }, density: { value: p.density }, flow: { value: p.flow },
+        hue: { value: p.hue }, glow: { value: p.glow },
+      };
+      const mat = new THREE.ShaderMaterial({
+        uniforms: u,
+        transparent: true,
+        depthWrite: false,
+        side: THREE.DoubleSide,
+        blending: THREE.AdditiveBlending,
+        vertexShader: GLSL_VALUE_NOISE + `
+          uniform float time, flow;
+          varying vec3 vP; varying vec3 vN; varying vec3 vView;
+          void main(){
+            // Slight outward "puff" to make J fluffier
+            float puff = fbm3(position * 3.0 + vec3(time * 0.2 * flow, 0.0, 0.0)) * 0.05;
+            vec3 d = position + normal * puff;
+            vP = position;
+            vN = normalize(normalMatrix * normal);
+            vec4 mv = modelViewMatrix * vec4(d, 1.0);
+            vView = normalize(-mv.xyz);
+            gl_Position = projectionMatrix * mv;
+          }`,
+        fragmentShader: GLSL_VALUE_NOISE + GLSL_HSL + `
+          uniform float time, density, hue, flow, glow;
+          varying vec3 vP; varying vec3 vN; varying vec3 vView;
+          void main(){
+            float t = time * (0.15 + flow * 0.5);
+            // Two layers of swirling noise for cloud-like motion
+            float n1 = fbm3(vP * 4.0 + vec3(t * 0.4, t, t * 0.6));
+            float n2 = fbm3(vP * 8.0 + vec3(-t * 0.3, t * 0.8, 0.0));
+            float vapor = n1 * 0.6 + n2 * 0.4;
+            // Soft alpha based on noise + fresnel — denser at glancing angles, like real fog
+            float fres = pow(1.0 - abs(dot(normalize(vN), vView)), 1.5);
+            float alpha = smoothstep(0.3, 0.7, vapor) * density;
+            alpha = mix(alpha, alpha + fres * 0.3, 0.5);
+            alpha = clamp(alpha, 0.0, 0.9);
+            // Color: shifts subtly with vapor density and hue parameter
+            float h = hue + vapor * 0.05 + sin(time * 0.1) * 0.03;
+            vec3 base = hsl2rgb(h, 0.4, 0.7);
+            vec3 bright = hsl2rgb(h + 0.05, 0.3, 0.95);
+            vec3 col = mix(base, bright, vapor);
+            // Glow at fresnel edges
+            col += hsl2rgb(h + 0.1, 0.5, 0.85) * fres * glow * 0.4;
+            gl_FragColor = vec4(col, alpha);
+          }`,
       });
+      mat.userData.uniforms = u;
+      return mat;
     },
     controls: [
-      { key: 'thickness', label: 'Film thickness', min: 200, max: 1200, step: 10 },
-      { key: 'intensity', label: 'Intensity', min: 0, max: 1, step: 0.01 },
-      { key: 'roughness', label: 'Roughness', min: 0, max: 0.3, step: 0.01 },
-      { key: 'base', label: 'Base hue', min: 0, max: 1, step: 0.01 },
+      { key: 'density', label: 'Density', min: 0.2, max: 1, step: 0.01 },
+      { key: 'flow', label: 'Flow speed', min: 0, max: 1.5, step: 0.05 },
+      { key: 'hue', label: 'Hue', min: 0, max: 1, step: 0.01 },
+      { key: 'glow', label: 'Edge glow', min: 0, max: 1.5, step: 0.05 },
     ],
     update(p, mat) {
-      mat.iridescence = p.intensity;
-      mat.iridescenceThicknessRange = [100, p.thickness];
-      mat.roughness = p.roughness;
-      mat.color.setHSL(p.base, 0.1, 0.95);
+      const u = mat.userData.uniforms;
+      u.density.value = p.density; u.flow.value = p.flow;
+      u.hue.value = p.hue; u.glow.value = p.glow;
     },
+    tick(t, mat) { mat.userData.uniforms.time.value = t; },
   },
 
   /* ───── 06 · STONES */
@@ -581,7 +666,7 @@ const SKINS = {
   /* ───── 07 · FUZZY — real instanced 3D fur strands attached to the J surface */
   fuzzy: {
     label: 'Fuzzy',
-    params: { count: 6000, length: 0.10, hue: 0.05, wind: 0.4 },
+    params: { count: 6000, length: 0.20, hue: 0.05, wind: 0.5 },
     post: { bloom: false },
     make(p) {
       // Dark skin underneath fur (the J's "scalp")
@@ -595,9 +680,9 @@ const SKINS = {
     },
     controls: [
       { key: 'count', label: 'Strand count', min: 1500, max: 12000, step: 500 },
-      { key: 'length', label: 'Length', min: 0.03, max: 0.22, step: 0.005 },
+      { key: 'length', label: 'Length', min: 0.05, max: 2.0, step: 0.05 },
       { key: 'hue', label: 'Color', min: 0, max: 1, step: 0.01 },
-      { key: 'wind', label: 'Wind', min: 0, max: 1, step: 0.01 },
+      { key: 'wind', label: 'Wind', min: 0, max: 2, step: 0.05 },
     ],
     update(p, mat) {
       mat.color.setHSL(p.hue, 0.55, 0.10);
@@ -675,23 +760,23 @@ const SKINS = {
   /* ───── 09 · VINES — real instanced 3D leaves growing on the J surface */
   vines: {
     label: 'Vines',
-    params: { count: 240, leafSize: 0.6, hue: 0.30, wind: 0.5 },
+    params: { count: 600, leafSize: 1.0, hue: 0.30, wind: 0.5 },
     post: { bloom: false },
     make(p) {
       // Bark/wood base
       const baseMat = new THREE.MeshStandardMaterial({
-        color: new THREE.Color().setHSL(0.07, 0.55, 0.15),
-        roughness: 0.92, metalness: 0.0,
+        color: new THREE.Color().setHSL(0.08, 0.5, 0.10),
+        roughness: 0.95, metalness: 0.0,
       });
       buildLeafInstances(p);
       decorGroup.visible = true;
       return baseMat;
     },
     controls: [
-      { key: 'count', label: 'Leaf count', min: 60, max: 600, step: 20 },
-      { key: 'leafSize', label: 'Leaf size', min: 0.3, max: 1.4, step: 0.05 },
-      { key: 'hue', label: 'Leaf hue', min: 0.20, max: 0.40, step: 0.01 },
-      { key: 'wind', label: 'Wind', min: 0, max: 1, step: 0.01 },
+      { key: 'count', label: 'Leaf count', min: 100, max: 1500, step: 50 },
+      { key: 'leafSize', label: 'Leaf size', min: 0.4, max: 2.0, step: 0.05 },
+      { key: 'hue', label: 'Leaf hue', min: 0.18, max: 0.42, step: 0.01 },
+      { key: 'wind', label: 'Wind', min: 0, max: 1.5, step: 0.05 },
     ],
     update(p, mat) {
       mat.color.setHSL(0.07, 0.55, 0.15);
@@ -774,10 +859,14 @@ function buildFurInstances(p) {
         vSeed = aSeed;
         // Stretch the strand to its individual length, scaled by global uLength
         vec3 p = position * vec3(1.0, uLength * aLen, 1.0);
-        // Wind sway — increases with height; per-strand phase via seed
-        float sway = sin(uTime * 1.3 + aSeed * 31.4) * uWind * 0.04 * pow(p.y / max(0.001, uLength * aLen), 1.8);
-        p.x += sway;
-        p.z += sway * 0.5;
+        // Wind sway — increases with height; per-strand phase via seed.
+        // Wind effect scales with strand length so longer hair sways more dramatically.
+        float yt = p.y / max(0.001, uLength * aLen);
+        float windAmp = uWind * 0.12 * uLength * aLen;
+        float sway = sin(uTime * 1.4 + aSeed * 31.4) * pow(yt, 1.8);
+        float swayZ = cos(uTime * 1.1 + aSeed * 17.7) * pow(yt, 1.8);
+        p.x += sway * windAmp;
+        p.z += swayZ * windAmp * 0.7;
         // Gentle gravity droop at tip
         p.y -= pow(p.y / max(0.001, uLength * aLen), 2.0) * uLength * aLen * 0.06;
         vec4 wp = instanceMatrix * vec4(p, 1.0);
@@ -842,32 +931,48 @@ function buildLeafInstances(p) {
   if (!baseGeometry) return;
   const COUNT = p.count;
 
-  // Build a leaf shape by hand: a teardrop of triangles
-  // Pivot at base (y=0), tip at y=1.6, ~0.7 wide
+  // Hand-built leaf geometry: elongated almond shape with central spine,
+  // curved upward at the tip (real leaves have a slight 3D bend).
+  // Pivot at base (y=0), tip at y=2.2, max width ~0.9
   const leaf = new THREE.BufferGeometry();
-  const ringSteps = 7;
+  const RINGS = 11;
   const verts = [];
   const idx = [];
-  // Center spine
+  // Base point
   verts.push(0, 0, 0);
-  for (let i = 1; i <= ringSteps; i++) {
-    const t = i / ringSteps;            // 0..1 along leaf
-    const y = t * 1.6;
-    const w = Math.sin(Math.PI * t) * 0.55 * (1.0 + Math.sin(t * Math.PI * 0.6) * 0.15);
-    verts.push(-w, y, 0);                // left edge
-    verts.push( w, y, 0);                // right edge
+  for (let i = 1; i <= RINGS; i++) {
+    const t = i / RINGS;                 // 0..1 along leaf length
+    const y = t * 2.2;
+    // Width profile — narrow at base, widest 40% along, pointed at tip
+    const widthCurve = Math.pow(Math.sin(Math.PI * t), 0.7);
+    const w = widthCurve * 0.5;
+    // Slight upward curl in z based on height
+    const z = Math.sin(t * Math.PI) * 0.12;
+    // Veins/curl at edge: tiny spine bump in the middle
+    const spineZ = Math.sin(t * Math.PI) * 0.04;
+    verts.push(-w, y, z);
+    verts.push( 0, y, z + spineZ);
+    verts.push( w, y, z);
   }
-  // Triangulate: each ring connects to previous
-  for (let i = 0; i < ringSteps; i++) {
+  // Triangulate as 3 strips (left, center spine, right)
+  for (let i = 0; i < RINGS; i++) {
     if (i === 0) {
+      // Connect base point to first ring
       idx.push(0, 1, 2);
+      idx.push(0, 2, 3);
     } else {
-      const a = 1 + (i - 1) * 2;          // prev left
-      const b = 1 + (i - 1) * 2 + 1;      // prev right
-      const c = 1 + i * 2;                // curr left
-      const d = 1 + i * 2 + 1;            // curr right
-      idx.push(a, c, b);
-      idx.push(b, c, d);
+      const aL = 1 + (i - 1) * 3;
+      const aC = aL + 1;
+      const aR = aL + 2;
+      const bL = 1 + i * 3;
+      const bC = bL + 1;
+      const bR = bL + 2;
+      // left strip
+      idx.push(aL, bL, aC);
+      idx.push(bL, bC, aC);
+      // right strip
+      idx.push(aC, bC, aR);
+      idx.push(bC, bR, aR);
     }
   }
   leaf.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3));
@@ -891,50 +996,66 @@ function buildLeafInstances(p) {
       varying vec2 vLeafUV;
       varying vec3 vTint;
       varying vec3 vN;
+      varying vec3 vView;
       void main(){
-        // Encode leaf-local UV as (x normalized, y / 1.6)
-        vLeafUV = vec2((position.x / 0.55) * 0.5 + 0.5, position.y / 1.6);
+        // Encode leaf-local UV: x in [-0.5..0.5] from leaf width, y in [0..1] from leaf length
+        vLeafUV = vec2(position.x + 0.5, position.y / 2.2);
         vTint = aTint;
         vN = normalize(normalMatrix * normal);
-        // Wind sway: tips curl more than base. y-fraction scales sway amplitude.
-        float yt = position.y / 1.6;
-        float sway = sin(uTime * 2.0 + aSeed * 17.3) * uWind * 0.18 * pow(yt, 1.6);
+        // Wind sway: tips curl more than base. Per-leaf phase via seed.
+        float yt = position.y / 2.2;
+        float windAmp = uWind * 0.35 * pow(yt, 1.5);
+        float sway = sin(uTime * 2.4 + aSeed * 17.3);
+        float curl = cos(uTime * 1.7 + aSeed * 9.1);
         vec3 p = position;
-        p.x += sway * 0.3;
-        p.z += sway;
+        p.x += sway * windAmp * 0.4;
+        p.z += sway * windAmp;
+        p.z += curl * windAmp * 0.3;
         // Apply per-instance size scaling
         p *= uSize;
         vec4 wp = instanceMatrix * vec4(p, 1.0);
-        gl_Position = projectionMatrix * modelViewMatrix * wp;
+        vec4 mv = modelViewMatrix * wp;
+        vView = normalize(-mv.xyz);
+        gl_Position = projectionMatrix * mv;
       }`,
     fragmentShader: `
       uniform float uHue;
       varying vec2 vLeafUV;
       varying vec3 vTint;
       varying vec3 vN;
+      varying vec3 vView;
       vec3 hsl2rgb(float h, float s, float l) {
         vec3 r = clamp(abs(mod(h*6.0+vec3(0,4,2),6.0)-3.0)-1.0, 0.0, 1.0);
         return l + s * (r - 0.5) * (1.0 - abs(2.0*l - 1.0));
       }
       void main(){
-        // central vein along x = 0
-        float vein = smoothstep(0.04, 0.0, abs(vLeafUV.x - 0.5));
-        // side veins
+        // Central spine along x = 0.5
+        float spineDist = abs(vLeafUV.x - 0.5);
+        float spine = smoothstep(0.025, 0.0, spineDist) * 0.8;
+        // Side veins fanning out from spine — more realistic angle
         float side = 0.0;
-        for (int i = 0; i < 4; i++) {
-          float yy = 0.2 + float(i) * 0.18;
-          float dy = abs(vLeafUV.y - yy);
-          float dx = abs(vLeafUV.x - 0.5);
-          float v = smoothstep(0.04, 0.0, abs(dy - dx * 0.4));
-          side = max(side, v * smoothstep(0.55, 0.45, dx));
+        for (int i = 0; i < 6; i++) {
+          float yy = 0.15 + float(i) * 0.13;
+          float dy = vLeafUV.y - yy;
+          // Veins angle outward from spine
+          float angle = 0.45;
+          float vMask = smoothstep(0.03, 0.0, abs(dy - spineDist * angle));
+          side = max(side, vMask * smoothstep(0.5, 0.3, spineDist));
         }
-        // base color, with per-leaf tint variation
-        vec3 base = hsl2rgb(uHue + vTint.x, 0.55 + vTint.y * 0.2, 0.32 + vTint.z * 0.18);
-        vec3 darker = base * 0.55;
-        vec3 col = mix(base, darker, vein * 0.7 + side * 0.5);
-        // soft lambert
+        // Base leaf color with per-leaf hue/sat/light variation
+        float h = uHue + vTint.x;
+        float s = 0.55 + vTint.y * 0.25;
+        float l = 0.30 + vTint.z * 0.20;
+        vec3 base = hsl2rgb(h, s, l);
+        // Veins are slightly lighter (sun-bleached)
+        vec3 veinCol = hsl2rgb(h - 0.02, s * 0.7, l * 1.4);
+        vec3 col = mix(base, veinCol, max(spine, side * 0.7));
+        // Edge translucency — leaf glows slightly at silhouette (sun-through-leaf effect)
+        float fres = pow(1.0 - abs(dot(normalize(vN), vView)), 1.5);
+        col += hsl2rgb(h - 0.05, 0.6, 0.5) * fres * 0.4;
+        // Soft lambert + ambient
         vec3 L = normalize(vec3(0.4, 0.9, 0.5));
-        float lit = 0.45 + 0.55 * max(0.0, dot(normalize(vN), L));
+        float lit = 0.5 + 0.5 * max(0.0, dot(normalize(vN), L));
         col *= lit;
         gl_FragColor = vec4(col, 1.0);
       }`,
@@ -969,8 +1090,8 @@ function buildLeafInstances(p) {
       (Math.random() - 0.5) * 0.7
     );
     tmpQuat.premultiply(tilt);
-    // Per-leaf scale variation
-    const sc = 0.025 * (0.65 + Math.random() * 0.7);
+    // Per-leaf scale variation — bigger leaves so they read clearly
+    const sc = 0.045 * (0.6 + Math.random() * 0.9);
     tmpScale.setScalar(sc);
     tmp.compose(tmpPos, tmpQuat, tmpScale);
     inst.setMatrixAt(i, tmp);
@@ -1092,47 +1213,71 @@ function formatValue(v, ctrl) {
 let bgSystem = null;
 let currentBg = null;
 
-/* ───── Aurora — vertical curtains with flowing color, my own arrangement */
-function makeAurora() {
+/* ───── Aurora — wispy curtains spread across the full canvas */
+function makeAurora(params) {
+  const p = { speed: 0.6, count: 8, ...params };
   const bgScene = new THREE.Scene();
   const bgCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
   const uniforms = {
     uTime: { value: 0 },
     uRes: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
     uMouse: { value: new THREE.Vector2(0, 0) },
+    uSpeed: { value: p.speed },
+    uCount: { value: p.count },
   };
   const mat = new THREE.ShaderMaterial({
     uniforms,
     vertexShader: `void main(){ gl_Position = vec4(position.xy, 0.0, 1.0); }`,
     fragmentShader: GLSL_VALUE_NOISE + GLSL_HSL + `
-      uniform float uTime; uniform vec2 uRes; uniform vec2 uMouse;
-      // A single aurora curtain: vertical band with horizontal noise distortion + height-faded.
-      float curtain(vec2 uv, float seed, float phase, float speed) {
-        float xWarp = (fbm2(vec2(uv.y * 0.8 + uTime * speed, seed)) - 0.5) * 1.6;
-        float dx = uv.x - xWarp;
-        float band = exp(-pow(dx * 1.8, 2.0));            // gaussian band shape
-        float hf = smoothstep(-1.1, -0.3, uv.y) * smoothstep(1.2, 0.4, uv.y);
-        // vertical streaks within the band
-        float streak = 0.7 + 0.3 * fbm2(vec2(uv.x * 4.0 + seed, uv.y * 8.0 - uTime * 0.6 * speed));
-        return band * hf * streak;
+      uniform float uTime, uSpeed, uCount;
+      uniform vec2 uRes, uMouse;
+      // Wisp at a position in canvas-space, drifting horizontally + warping
+      float wisp(vec2 uv, vec2 center, float seed, float speed, float spread) {
+        // Wisp travels horizontally across the full canvas
+        float drift = mod(uTime * speed * 0.05 + seed * 4.0, 4.5) - 2.25;
+        vec2 c = center + vec2(drift, 0.0);
+        // Warp the wisp shape with FBM noise
+        float warpX = fbm2(vec2(uv.y * 0.6 + uTime * speed * 0.3, seed * 3.7)) * 1.2;
+        float warpY = fbm2(vec2(uv.x * 0.6 + uTime * speed * 0.2, seed * 9.1)) * 0.6;
+        vec2 d = uv - c - vec2(warpX, warpY);
+        // Stretched vertical gaussian — wisp is taller than wide
+        float distSq = (d.x * d.x) / (spread * spread) + (d.y * d.y) / (spread * spread * 4.0);
+        float band = exp(-distSq * 1.5);
+        // Vertical streaks within the wisp
+        float streak = 0.6 + 0.4 * fbm2(vec2(uv.x * 5.0 + seed, uv.y * 9.0 - uTime * 0.5 * speed));
+        return band * streak;
       }
       void main(){
         vec2 uv = (gl_FragCoord.xy - uRes.xy * 0.5) / uRes.y * 2.0;
-        // Mouse subtly distorts the field
-        uv += (uMouse - 0.5) * 0.15;
+        // x range covers full canvas aspect-aware
+        float aspect = uRes.x / uRes.y;
+        uv += (uMouse - 0.5) * 0.2;
 
         vec3 col = vec3(0.0);
-        // 4 curtains, distinct hues drifting over time
-        col += curtain(uv + vec2(-0.7, 0.0), 0.31, 0.0, 0.30) * hsl2rgb(0.40 + 0.05*sin(uTime*0.10), 0.95, 0.55);
-        col += curtain(uv + vec2(-0.15, 0.0), 1.27, 0.5, 0.42) * hsl2rgb(0.50 + 0.04*sin(uTime*0.13), 0.90, 0.55);
-        col += curtain(uv + vec2( 0.35, 0.0), 2.93, 1.0, 0.36) * hsl2rgb(0.78 + 0.05*sin(uTime*0.16), 0.85, 0.60);
-        col += curtain(uv + vec2( 0.85, 0.0), 4.61, 1.5, 0.50) * hsl2rgb(0.92 + 0.05*sin(uTime*0.19), 0.85, 0.55);
+        // Spread wisps across the canvas — randomized x positions, varied hues
+        int N = int(min(uCount, 14.0));
+        for (int i = 0; i < 14; i++) {
+          if (i >= N) break;
+          float fi = float(i);
+          // Pseudo-random position spanning full canvas
+          float seedX = fi * 0.4137 + 0.13;
+          float seedY = fi * 0.7531 + 0.41;
+          float xPos = (fract(sin(seedX * 73.7) * 4321.97) - 0.5) * 2.0 * aspect;
+          float yPos = (fract(sin(seedY * 91.3) * 7723.11) - 0.5) * 1.5;
+          float seed = fi * 1.7 + 0.31;
+          float spread = 0.3 + fract(sin(fi * 13.9) * 12345.0) * 0.4;
+          float speed = uSpeed * (0.7 + fract(sin(fi * 21.7) * 6789.0) * 0.6);
+          // Hue rotates per wisp + slow drift over time
+          float hue = fract(fi * 0.14 + uTime * 0.015);
+          float w = wisp(uv, vec2(xPos, yPos), seed, speed, spread);
+          col += hsl2rgb(hue, 0.9, 0.55) * w;
+        }
 
-        // soft low base — aurora green wash
-        float base = max(0.0, 0.18 - length(uv*vec2(0.4,1.0)) * 0.18);
-        col += vec3(0.05, 0.18, 0.10) * base;
+        // Soft ambient base wash (dim)
+        float ambient = 0.05 * (0.5 + fbm2(uv * 1.2 + uTime * 0.04));
+        col += vec3(0.08, 0.10, 0.18) * ambient;
 
-        // starfield
+        // Starfield
         vec2 g = floor(gl_FragCoord.xy * 0.45);
         float h = fract(sin(dot(g, vec2(12.9, 78.2))) * 43758.5453);
         if (h > 0.992) {
@@ -1140,13 +1285,12 @@ function makeAurora() {
           col += vec3(0.95, 0.92, 0.85) * (h - 0.992) * 95.0 * tw;
         }
 
-        // gentle vignette
-        float vig = 1.0 - dot(uv, uv) * 0.10;
-        col *= clamp(vig, 0.4, 1.0);
+        // Gentle vignette
+        float vig = 1.0 - dot(uv, uv) * 0.06;
+        col *= clamp(vig, 0.5, 1.0);
 
-        // tonemap-ish
-        col = col / (col + vec3(1.4));
-
+        // Tone curve
+        col = col / (col + vec3(1.3));
         gl_FragColor = vec4(col, 1.0);
       }`,
     depthTest: false, depthWrite: false,
@@ -1154,19 +1298,24 @@ function makeAurora() {
   const plane = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), mat);
   bgScene.add(plane);
   return {
-    scene: bgScene, camera: bgCamera,
+    scene: bgScene, camera: bgCamera, kind: 'aurora',
     tick(t, mouse) {
       uniforms.uTime.value = t;
       uniforms.uMouse.value.x = (mouse.x + 1) * 0.5;
       uniforms.uMouse.value.y = (1 - mouse.y) * 0.5;
     },
     resize(w, h) { uniforms.uRes.value.set(w, h); },
+    setParam(k, v) {
+      if (k === 'speed') uniforms.uSpeed.value = v;
+      if (k === 'count') uniforms.uCount.value = v;
+    },
     dispose() { mat.dispose(); plane.geometry.dispose(); },
   };
 }
 
 /* ───── Fireworks — original particle system with synthesized audio kick */
-function makeFireworks() {
+function makeFireworks(params) {
+  const cfg = { frequency: 1.0, size: 1.0, ...params };
   const bgScene = new THREE.Scene();
   bgScene.fog = new THREE.FogExp2(0x000000, 0.0018);
   const bgCamera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 4000);
@@ -1273,7 +1422,7 @@ function makeFireworks() {
       this.rocket.geometry.dispose(); this.rocket.material.dispose();
       this.rocket = null;
       this.phase = 'burst';
-      const N = 1200 + Math.floor(Math.random() * 800);
+      const N = Math.floor((1200 + Math.floor(Math.random() * 800)) * cfg.size);
       this.N = N;
       this.pos0 = this.pos.clone();
       const positions = new Float32Array(N * 3);
@@ -1281,7 +1430,7 @@ function makeFireworks() {
       this.vel = new Float32Array(N * 3);
       this.life = new Float32Array(N);
       this.col0 = new Float32Array(N * 3);
-      const speed = 1.6 + Math.random() * 1.4;
+      const speed = (1.6 + Math.random() * 1.4) * cfg.size;
       // Burst variant: spherical (most), ring (some), willow (some)
       const variant = Math.random();
       for (let i = 0; i < N; i++) {
@@ -1401,13 +1550,18 @@ function makeFireworks() {
   host.addEventListener('click', onClick);
 
   return {
-    scene: bgScene, camera: bgCamera,
+    scene: bgScene, camera: bgCamera, kind: 'fireworks',
+    setParam(k, v) {
+      if (k === 'frequency') cfg.frequency = v;
+      if (k === 'size') cfg.size = v;
+    },
     tick(_t) {
       const dt = clock.getDelta();
       const now = performance.now();
       if (now - lastLaunch > nextDelay) {
         lastLaunch = now;
-        nextDelay = 2400 + Math.random() * 2600;
+        // Higher frequency = shorter delay
+        nextDelay = (2400 + Math.random() * 2600) / Math.max(0.2, cfg.frequency);
         launch();
       }
       for (let i = rockets.length - 1; i >= 0; i--) {
@@ -1430,7 +1584,13 @@ function makeFireworks() {
 }
 
 /* ───── Galaxy — original spiral particle distribution */
-function makeGalaxy() {
+function makeGalaxy(params) {
+  const cfg = {
+    quality: MOBILE ? 0 : 1,    // 0=low, 1=med, 2=high
+    speed: 1.0,
+    comets: true,
+    ...params,
+  };
   const bgScene = new THREE.Scene();
   const bgCamera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
   bgCamera.position.set(0, 18, 95);
@@ -1448,7 +1608,8 @@ function makeGalaxy() {
     return new THREE.CanvasTexture(c);
   })();
 
-  const N = MOBILE ? 60000 : 160000;
+  const QUALITY_PRESETS = [40000, 100000, 200000];
+  const N = QUALITY_PRESETS[Math.max(0, Math.min(2, cfg.quality | 0))];
   const positions = new Float32Array(N * 3);
   const colors = new Float32Array(N * 3);
   const sizes = new Float32Array(N);
@@ -1631,25 +1792,105 @@ function makeGalaxy() {
   })();
   bgScene.add(bgStars);
 
+  // Comets — long-tailed particles streaking through the scene
+  const comets = [];
+  function spawnComet() {
+    const startA = Math.random() * Math.PI * 2;
+    const startR = 200 + Math.random() * 100;
+    const targetA = startA + Math.PI + (Math.random() - 0.5) * 0.6;
+    const targetR = 30 + Math.random() * 50;
+    return {
+      pos: new THREE.Vector3(Math.cos(startA) * startR, (Math.random() - 0.5) * 30, Math.sin(startA) * startR),
+      target: new THREE.Vector3(Math.cos(targetA) * targetR, (Math.random() - 0.5) * 6, Math.sin(targetA) * targetR),
+      progress: 0,
+      duration: 6 + Math.random() * 6,
+      trail: [],
+    };
+  }
+  // Comet rendering: a single Line for each comet's trail
+  const cometGeometries = [];
+  const cometLines = [];
+  const MAX_COMETS = 6;
+  for (let i = 0; i < MAX_COMETS; i++) {
+    const cg = new THREE.BufferGeometry();
+    const positions = new Float32Array(40 * 3); // 40-segment trail
+    const colors = new Float32Array(40 * 3);
+    cg.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    cg.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+    cometGeometries.push(cg);
+    const line = new THREE.Line(cg, new THREE.LineBasicMaterial({
+      vertexColors: true, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false,
+    }));
+    line.visible = false;
+    bgScene.add(line);
+    cometLines.push(line);
+  }
+  let lastCometSpawn = 0;
+
   return {
-    scene: bgScene, camera: bgCamera,
+    scene: bgScene, camera: bgCamera, kind: 'galaxy',
+    setParam(k, v) {
+      if (k === 'speed') cfg.speed = v;
+      if (k === 'comets') cfg.comets = !!v;
+    },
     tick(t, mouse) {
-      // Per-particle differential rotation: inner spins faster
       mat.uniforms.uTime.value = t;
+      // Per-particle differential rotation
       const pos = geo.attributes.position.array;
+      const sp = cfg.speed;
       for (let i = 0; i < N; i++) {
         const r = radii[i];
-        const w = 0.06 / (0.5 + r * 0.06);  // angular velocity falloff
-        angles[i] += w * 0.016 + 0.0003;
+        const w = 0.06 / (0.5 + r * 0.06);
+        angles[i] += (w * 0.016 + 0.0003) * sp;
         const a = angles[i];
         pos[i * 3] = Math.cos(a) * r;
         pos[i * 3 + 2] = Math.sin(a) * r;
       }
       geo.attributes.position.needsUpdate = true;
 
-      // Slow camera orbit influenced by mouse
+      // Comets
+      if (cfg.comets) {
+        if (t - lastCometSpawn > 3.5 && comets.length < MAX_COMETS) {
+          comets.push(spawnComet());
+          lastCometSpawn = t;
+        }
+        const dt = 0.016;
+        for (let i = comets.length - 1; i >= 0; i--) {
+          const c = comets[i];
+          c.progress += dt / c.duration;
+          if (c.progress >= 1) { comets.splice(i, 1); continue; }
+          // Lerp position
+          c.pos.lerpVectors(c.pos, c.target, dt / (c.duration * (1 - c.progress) + 0.001));
+          c.trail.unshift(c.pos.clone());
+          if (c.trail.length > 40) c.trail.pop();
+          // Update line geometry
+          const line = cometLines[i];
+          const cg = cometGeometries[i];
+          const positions = cg.attributes.position.array;
+          const colors = cg.attributes.color.array;
+          for (let j = 0; j < 40; j++) {
+            const pt = c.trail[j] || c.trail[c.trail.length - 1];
+            positions[j * 3]     = pt ? pt.x : 0;
+            positions[j * 3 + 1] = pt ? pt.y : 0;
+            positions[j * 3 + 2] = pt ? pt.z : 0;
+            const fade = (40 - j) / 40;
+            colors[j * 3]     = 0.9 * fade;
+            colors[j * 3 + 1] = 0.95 * fade;
+            colors[j * 3 + 2] = 1.0 * fade;
+          }
+          cg.attributes.position.needsUpdate = true;
+          cg.attributes.color.needsUpdate = true;
+          line.visible = true;
+        }
+        // Hide unused comet lines
+        for (let i = comets.length; i < MAX_COMETS; i++) cometLines[i].visible = false;
+      } else {
+        for (let i = 0; i < MAX_COMETS; i++) cometLines[i].visible = false;
+      }
+
+      // Camera orbit
       const camR = 95;
-      const baseAngle = t * 0.04;
+      const baseAngle = t * 0.04 * sp;
       const tilt = mouse.y * 12;
       bgCamera.position.x = Math.sin(baseAngle + mouse.x * 0.6) * camR;
       bgCamera.position.z = Math.cos(baseAngle + mouse.x * 0.6) * camR;
@@ -1666,6 +1907,7 @@ function makeGalaxy() {
       bgScene.remove(bgStars); bgStars.geometry.dispose(); bgStars.material.dispose();
       bgScene.remove(coreSprite); coreSprite.material.dispose();
       bgScene.remove(haloSprite); haloSprite.material.dispose();
+      cometLines.forEach((l, i) => { bgScene.remove(l); cometGeometries[i].dispose(); l.material.dispose(); });
       sprite.dispose();
     },
   };
@@ -1678,12 +1920,82 @@ const BG_FACTORIES = {
   galaxy: makeGalaxy,
 };
 
+const BG_DEFAULTS = {
+  aurora: { speed: 0.6, count: 8 },
+  fireworks: { frequency: 1.0, size: 1.0 },
+  galaxy: { quality: MOBILE ? 0 : 1, speed: 1.0, comets: true },
+};
+
+const BG_CONTROLS = {
+  aurora: [
+    { key: 'speed', label: 'Speed', min: 0.1, max: 2, step: 0.05 },
+    { key: 'count', label: 'Wisp count', min: 2, max: 14, step: 1 },
+  ],
+  fireworks: [
+    { key: 'frequency', label: 'Frequency', min: 0.3, max: 3, step: 0.1 },
+    { key: 'size', label: 'Burst size', min: 0.5, max: 2, step: 0.05 },
+  ],
+  galaxy: [
+    { key: 'quality', label: 'Quality (0=low,2=high)', min: 0, max: 2, step: 1 },
+    { key: 'speed', label: 'Rotation speed', min: 0, max: 3, step: 0.05 },
+    { key: 'comets', label: 'Comets', min: 0, max: 1, step: 1 },
+  ],
+};
+
+function getBgParams(key) {
+  return { ...BG_DEFAULTS[key], ...(state.bgParams?.[key] || {}) };
+}
+
 function applyBg(key) {
   if (bgSystem) { bgSystem.dispose(); bgSystem = null; }
-  if (key !== 'none' && BG_FACTORIES[key]) bgSystem = BG_FACTORIES[key]();
+  if (key !== 'none' && BG_FACTORIES[key]) {
+    bgSystem = BG_FACTORIES[key](getBgParams(key));
+  }
   currentBg = key;
   state.bg = key;
   saveState();
+  buildBgParamPanel(key);
+}
+
+function buildBgParamPanel(key) {
+  const panel = document.getElementById('bg-params');
+  const body = document.getElementById('bg-param-body');
+  if (!panel || !body) return;
+  if (key === 'none' || !BG_CONTROLS[key]) {
+    panel.classList.remove('show');
+    body.innerHTML = '';
+    return;
+  }
+  body.innerHTML = '';
+  const params = getBgParams(key);
+  BG_CONTROLS[key].forEach((ctrl) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'control';
+    const id = `bgctrl-${key}-${ctrl.key}`;
+    const val = params[ctrl.key];
+    const display = ctrl.step >= 1 ? Math.round(val) : val.toFixed(2);
+    wrap.innerHTML = `
+      <div class="row"><label for="${id}">${ctrl.label}</label><span class="val" id="${id}-val">${display}</span></div>
+      <input type="range" id="${id}" min="${ctrl.min}" max="${ctrl.max}" step="${ctrl.step}" value="${val}">`;
+    body.appendChild(wrap);
+    const input = wrap.querySelector('input');
+    const valEl = wrap.querySelector('.val');
+    input.addEventListener('input', (e) => {
+      const v = parseFloat(e.target.value);
+      params[ctrl.key] = v;
+      state.bgParams = state.bgParams || {};
+      state.bgParams[key] = params;
+      saveState();
+      // Quality on galaxy means full rebuild; otherwise live update
+      if (key === 'galaxy' && ctrl.key === 'quality') {
+        applyBg(key);
+      } else if (bgSystem?.setParam) {
+        bgSystem.setParam(ctrl.key, v);
+      }
+      valEl.textContent = ctrl.step >= 1 ? Math.round(v) : v.toFixed(2);
+    });
+  });
+  panel.classList.add('show');
 }
 
 /* ──────────────────────────────────────────────────────────────
@@ -1750,6 +2062,7 @@ function startTvCycle() {
     const idx = keys.indexOf(currentSkin);
     const next = keys[(idx + 1) % keys.length];
     setActiveButton(next); applySkin(next);
+    window.dispatchEvent(new CustomEvent('jdev:skinchange', { detail: { skin: next } }));
   }, TV_INTERVAL_MS);
 }
 function stopTvCycle() { if (tvTimer) { clearInterval(tvTimer); tvTimer = null; } }
