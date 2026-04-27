@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Email setup — Jonathan Ellis (.ca)</title>
+<meta name="description" content="One-tap install of your @jonathanellis.ca mail account on iPhone, iPad, or Mac.">
+<meta name="robots" content="noindex,nofollow">
+<link rel="icon" type="image/svg+xml" href="/public/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,400;0,500;0,600;1,500&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green: #00ff40;
+    --green-soft: rgba(0, 255, 64, 0.08);
+    --green-border: rgba(0, 255, 64, 0.22);
+    --maple: #ff5263;
+    --maple-soft: rgba(255, 82, 99, 0.08);
+    --maple-border: rgba(255, 82, 99, 0.25);
+    --ink: #0c0d0f;
+    --ink-2: #14161a;
+    --bone: #efefef;
+    --bone-dim: rgba(239, 239, 239, 0.7);
+    --muted: rgba(239, 239, 239, 0.45);
+    --line: rgba(239, 239, 239, 0.1);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--ink);
+    color: var(--bone);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-weight: 300;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 40px 26px 80px; }
+
+  nav.top {
+    display: flex; align-items: center; justify-content: space-between;
+    padding-bottom: 44px;
+    font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted);
+  }
+  nav.top .brand {
+    display: inline-flex; align-items: center; gap: 12px;
+    color: var(--bone); text-decoration: none; letter-spacing: 0.2em;
+  }
+  nav.top .brand img { width: 24px; height: 24px; }
+  nav.top .brand span.dot { color: var(--green); }
+  nav.top .brand span.tld { color: var(--maple); }
+  nav.top .right { color: var(--muted); }
+
+  .kicker {
+    color: var(--green);
+    font-size: 12px; letter-spacing: 0.22em; text-transform: uppercase;
+    margin-bottom: 20px;
+    font-weight: 500;
+  }
+  .kicker .flag {
+    color: var(--maple);
+    margin-left: 8px;
+  }
+  h1 {
+    font-family: 'Cormorant', Georgia, serif;
+    font-weight: 500;
+    font-size: clamp(44px, 6vw, 64px); line-height: 1.05; letter-spacing: -0.015em;
+    margin-bottom: 18px;
+  }
+  h1 em { color: var(--green); font-style: italic; font-weight: 500; }
+  .lede {
+    font-size: 17px; color: var(--bone-dim); margin-bottom: 44px;
+    max-width: 580px;
+  }
+  h2 {
+    font-family: 'Cormorant', Georgia, serif;
+    font-weight: 500;
+    font-size: 30px;
+    margin: 56px 0 16px;
+    letter-spacing: -0.01em;
+  }
+  h2 em { color: var(--green); font-style: italic; }
+  p { margin-bottom: 14px; color: var(--bone-dim); }
+  a { color: var(--green); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  .accounts { display: flex; flex-direction: column; gap: 12px; }
+  .account-card {
+    background: var(--ink-2);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 22px 24px;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 18px; flex-wrap: wrap;
+    transition: all 0.25s ease;
+  }
+  .account-card:hover { border-color: var(--green-border); transform: translateY(-1px); }
+  .account-card .info { flex: 1; min-width: 220px; }
+  .account-card .addr {
+    font-size: 17px; color: var(--bone); font-weight: 500;
+    margin-bottom: 4px;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+  }
+  .account-card .desc {
+    color: var(--muted); font-size: 12.5px;
+    letter-spacing: 0.04em;
+  }
+  .account-card .desc .domain {
+    color: var(--maple);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-right: 8px;
+  }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 12px 22px; border-radius: 999px;
+    background: var(--green); color: var(--ink);
+    text-decoration: none; font-weight: 600; font-size: 13.5px;
+    border: 1px solid var(--green);
+    letter-spacing: 0.02em;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+  }
+  .btn:hover { background: transparent; color: var(--green); text-decoration: none; }
+  .btn .arrow { transition: transform 0.2s ease; }
+  .btn:hover .arrow { transform: translateX(2px); }
+
+  .steps { list-style: none; counter-reset: step; margin: 16px 0 22px; }
+  .steps li {
+    counter-increment: step;
+    padding-left: 50px; position: relative;
+    margin-bottom: 14px; color: var(--bone-dim);
+  }
+  .steps li::before {
+    content: counter(step);
+    position: absolute; left: 0; top: -2px;
+    width: 32px; height: 32px;
+    background: var(--green-soft);
+    border: 1px solid var(--green-border);
+    color: var(--green);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 600;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .steps li code {
+    background: var(--ink-2); border: 1px solid var(--line);
+    padding: 2px 6px; border-radius: 3px;
+    font-family: 'JetBrains Mono', monospace; font-size: 12.5px; color: var(--bone);
+  }
+
+  .detail-box {
+    background: var(--ink-2);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 22px 24px;
+    margin: 18px 0;
+  }
+  .detail-row {
+    display: grid;
+    grid-template-columns: 130px 1fr;
+    gap: 14px;
+    padding: 8px 0;
+    font-size: 14px;
+    border-bottom: 1px dashed var(--line);
+  }
+  .detail-row:last-child { border-bottom: none; }
+  .detail-row .key {
+    color: var(--muted); font-weight: 500;
+    font-size: 12.5px; text-transform: uppercase; letter-spacing: 0.06em;
+  }
+  .detail-row .val {
+    color: var(--bone);
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 13px; word-break: break-all;
+  }
+
+  .tabs {
+    display: flex; gap: 4px;
+    border-bottom: 1px solid var(--line);
+    margin: 18px 0 16px;
+  }
+  .tabs button {
+    background: transparent; border: none;
+    color: var(--bone-dim);
+    padding: 10px 16px;
+    font-family: inherit; font-size: 13px; font-weight: 500;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: all 0.15s ease;
+  }
+  .tabs button:hover { color: var(--green); }
+  .tabs button.active { color: var(--green); border-bottom-color: var(--green); }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  .note {
+    background: var(--maple-soft);
+    border: 1px solid var(--maple-border);
+    border-left: 3px solid var(--maple);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin: 22px 0;
+    font-size: 14px;
+    color: rgba(255, 82, 99, 0.92);
+  }
+  .note strong { color: var(--maple); }
+
+  footer {
+    margin-top: 70px; padding-top: 28px;
+    border-top: 1px solid var(--line);
+    font-size: 12px; letter-spacing: 0.15em; text-transform: uppercase;
+    color: var(--muted);
+    display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+  }
+  footer a { color: var(--bone-dim); }
+
+  @media (max-width: 600px) {
+    .account-card { flex-direction: column; align-items: flex-start; }
+    .account-card .btn { width: 100%; justify-content: center; }
+    .detail-row { grid-template-columns: 1fr; gap: 4px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <nav class="top">
+    <a class="brand" href="/">
+      <img src="/public/logo.svg" alt="JE">
+      Jonathan Ellis<span class="dot">.</span><span class="tld">CA</span>
+    </a>
+    <div class="right">Mail config — .ca</div>
+  </nav>
+
+  <div class="kicker">Email setup<span class="flag">· Canadian side</span></div>
+  <h1>Your <em>@jonathanellis.ca</em> mail.</h1>
+  <p class="lede">
+    Tap any account below on iPhone, iPad, or Mac. iOS / macOS will install a configuration profile and Mail.app is set up automatically — correct IMAP, SMTP, and SSL, no typing required.
+  </p>
+
+  <h2><em>Available</em> accounts</h2>
+
+  <div class="accounts">
+
+    <div class="account-card">
+      <div class="info">
+        <div class="addr">hello@jonathanellis.ca</div>
+        <div class="desc"><span class="domain">.ca</span>Primary inbox · IMAP · SSL</div>
+      </div>
+      <a class="btn" href="/setupemail/hello-jonathanellis-ca.mobileconfig" download>
+        Install profile <span class="arrow">→</span>
+      </a>
+    </div>
+
+  </div>
+
+  <h2>How to <em>install</em> on iPhone / iPad</h2>
+  <ol class="steps">
+    <li>Tap the green <strong>Install profile</strong> button above. iOS will say <em>"This website is trying to download a configuration profile."</em> Tap <strong>Allow</strong>.</li>
+    <li>iOS shows: <em>"Profile downloaded."</em> Open the <strong>Settings</strong> app. At the very top (under your name) you'll see <strong>Profile Downloaded</strong> — tap it.</li>
+    <li>Tap <strong>Install</strong> in the top-right. Enter your iPhone passcode if asked.</li>
+    <li>iOS prompts for the mailbox <strong>password</strong> — type the one you set when creating the account in <code>hq.jonathanellis.dev</code>. Tap <strong>Next</strong>, then <strong>Done</strong>.</li>
+    <li>Open <strong>Mail</strong>. The new account appears within ~5 seconds.</li>
+  </ol>
+
+  <h2>How to <em>install</em> on Mac</h2>
+  <ol class="steps">
+    <li>Click the green <strong>Install profile</strong> button. The <code>.mobileconfig</code> downloads to your Downloads folder.</li>
+    <li>Double-click the downloaded file. macOS opens <strong>System Settings → Privacy &amp; Security → Profiles</strong>.</li>
+    <li>Click the <strong>jonathanellis.ca Mail</strong> profile, then <strong>Install</strong>. Enter your Mac password.</li>
+    <li>macOS prompts for the mailbox <strong>password</strong> — type it. Done.</li>
+  </ol>
+
+  <h2>Manual <em>settings</em> (if you skip the profile)</h2>
+  <p>Same for every <code>@jonathanellis.ca</code> account — just substitute the email address.</p>
+  <div class="tabs">
+    <button class="active" data-tab="imap">Incoming (IMAP)</button>
+    <button data-tab="smtp">Outgoing (SMTP)</button>
+  </div>
+  <div class="tab-content active" id="tab-imap">
+    <div class="detail-box">
+      <div class="detail-row"><div class="key">Server</div><div class="val">mail.jonathanellis.ca</div></div>
+      <div class="detail-row"><div class="key">Port</div><div class="val">993</div></div>
+      <div class="detail-row"><div class="key">Encryption</div><div class="val">SSL / TLS</div></div>
+      <div class="detail-row"><div class="key">Authentication</div><div class="val">Password</div></div>
+      <div class="detail-row"><div class="key">Username</div><div class="val">your full email address</div></div>
+      <div class="detail-row"><div class="key">Password</div><div class="val">(set in hq.jonathanellis.dev)</div></div>
+    </div>
+  </div>
+  <div class="tab-content" id="tab-smtp">
+    <div class="detail-box">
+      <div class="detail-row"><div class="key">Server</div><div class="val">mail.jonathanellis.ca</div></div>
+      <div class="detail-row"><div class="key">Port</div><div class="val">587</div></div>
+      <div class="detail-row"><div class="key">Encryption</div><div class="val">STARTTLS (Use SSL: ON)</div></div>
+      <div class="detail-row"><div class="key">Authentication</div><div class="val">Password</div></div>
+      <div class="detail-row"><div class="key">Username</div><div class="val">your full email address</div></div>
+      <div class="detail-row"><div class="key">Password</div><div class="val">same as IMAP</div></div>
+    </div>
+  </div>
+
+  <h2>Trouble <em>connecting</em>?</h2>
+  <ul class="steps">
+    <li>Try cellular data instead of WiFi. Some café/hotel/corporate WiFi blocks port 993.</li>
+    <li>If you previously had <code>hello@jonathanellis.ca</code> at GoDaddy / Workspace Email: delete that account first (Settings → Mail → Accounts → tap account → Delete) before installing the new profile.</li>
+    <li>Verify the password by logging into <a href="https://hq.jonathanellis.dev/email/mailboxes">hq.jonathanellis.dev</a>. Reset there if needed.</li>
+  </ul>
+
+  <div class="note">
+    <strong>Privacy:</strong> the email server runs on Jonathan's own infrastructure (Hetzner Cloud, Nuremberg). Mail isn't filtered through GoDaddy / MXroute / Microsoft / Google. SMTP outbound goes through Brevo's authenticated relay so messages land in inboxes rather than spam.
+  </div>
+
+  <footer>
+    <div>© 2026 Jonathan Ellis</div>
+    <div>
+      <a href="/setupemail/">.dev mailboxes</a>
+      &nbsp;·&nbsp;
+      <a href="/">jonathanellis.dev</a>
+    </div>
+  </footer>
+
+</div>
+
+<script>
+  document.querySelectorAll('.tabs button').forEach(b => {
+    b.addEventListener('click', () => {
+      document.querySelectorAll('.tabs button').forEach(x => x.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+      document.getElementById('tab-' + b.dataset.tab).classList.add('active');
+    });
+  });
+</script>
+
+</body>
+</html>
