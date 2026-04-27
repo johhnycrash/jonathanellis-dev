@@ -197,6 +197,7 @@
     <span class="ok">●</span> fail2ban<br>
     <span class="ok">●</span> Coolify<br>
     <span class="ok">●</span> Hestia panel<br>
+    <span class="ok">●</span> HQ Admin Console<br>
     <span class="warn">○</span> Webmail (deferred)
   </div>
 </aside>
@@ -379,11 +380,39 @@
   <h2 id="admin">Admin <em>tools</em> <span class="count">— interactive utilities &amp; deep-dive references</span></h2>
   <div class="grid">
 
-    <a class="item" href="/newemailaccount/">
-      <span class="tag gold">Tool</span>
-      <div class="url">/newemailaccount</div>
-      <div class="name">Self-service mailbox creation</div>
-      <div class="desc">Form-based UI to add mailboxes (and domains) without SSH. Frontend complete; backend deploys next session.</div>
+    <a class="item" href="https://hq.jonathanellis.dev/" style="border-color: rgba(0,255,64,0.3); background: linear-gradient(180deg, rgba(0,255,64,0.04), transparent);">
+      <span class="tag" style="background: rgba(0,255,64,0.12); color: #00ff64; border-color: rgba(0,255,64,0.4);">Live · primary</span>
+      <div class="url">hq.jonathanellis.dev</div>
+      <div class="name">HQ Admin Console</div>
+      <div class="desc">The live admin: add/manage mailboxes, view services, audit log. Behind Cloudflare Access OTP. Replaces the legacy /newemailaccount form.</div>
+    </a>
+
+    <a class="item" href="https://hq.jonathanellis.dev/email/mailboxes/new" target="_blank" rel="noopener">
+      <span class="tag gold">Quick action</span>
+      <div class="url">hq.jonathanellis.dev/email/mailboxes/new</div>
+      <div class="name">+ New mailbox</div>
+      <div class="desc">Direct-link to the new-mailbox form on the live admin. Pick domain, set password, get profile.</div>
+    </a>
+
+    <a class="item" href="https://hq.jonathanellis.dev/email/mailboxes" target="_blank" rel="noopener">
+      <span class="tag gold">Quick action</span>
+      <div class="url">hq.jonathanellis.dev/email/mailboxes</div>
+      <div class="name">All mailboxes</div>
+      <div class="desc">Full list across every Hestia mail domain. Search, reset password, delete (Phase 2).</div>
+    </a>
+
+    <a class="item" href="https://hq.jonathanellis.dev/services" target="_blank" rel="noopener">
+      <span class="tag gold">Quick action</span>
+      <div class="url">hq.jonathanellis.dev/services</div>
+      <div class="name">System services</div>
+      <div class="desc">Live status of exim4, dovecot, traefik, coolify, hestia. Green/red dots from <code>v-list-sys-services</code>.</div>
+    </a>
+
+    <a class="item" href="https://hq.jonathanellis.dev/audit" target="_blank" rel="noopener">
+      <span class="tag gold">Quick action</span>
+      <div class="url">hq.jonathanellis.dev/audit</div>
+      <div class="name">Audit log</div>
+      <div class="desc">Append-only record of every state-changing action. Last 200 entries, newest first.</div>
     </a>
 
     <a class="item" href="/hq/dns/teamabsolute/">
@@ -396,8 +425,8 @@
     <a class="item" href="https://server.jonathanellis.dev:8083/" target="_blank" rel="noopener">
       <span class="tag private">Hestia</span>
       <div class="url">server.jonathanellis.dev:8083</div>
-      <div class="name">Hestia control panel (GUI)</div>
-      <div class="desc">Mail accounts, DNS, fail2ban GUI, package management. Direct port :8083 (Coolify owns 80/443).</div>
+      <div class="name">Hestia control panel (raw GUI)</div>
+      <div class="desc">Underlying Hestia panel — useful when the new admin doesn't yet expose a function (DNS zones, fail2ban, packages).</div>
     </a>
 
   </div>
@@ -432,6 +461,13 @@
   <!-- ============== SUBDOMAINS ============== -->
   <h2 id="subdomains">Subdomains <em>&amp; tools</em></h2>
   <div class="grid">
+
+    <a class="item" href="https://hq.jonathanellis.dev/" style="border-color: rgba(0,255,64,0.3);">
+      <span class="tag" style="background: rgba(0,255,64,0.12); color: #00ff64; border-color: rgba(0,255,64,0.4);">Live admin</span>
+      <div class="url">hq.jonathanellis.dev</div>
+      <div class="name">HQ Admin Console</div>
+      <div class="desc">Flask + HTMX + Alpine, deployed via Coolify, gated by Cloudflare Access. The single pane for managing this stack.</div>
+    </a>
 
     <a class="item" href="https://rustdesk.jonathanellis.dev/">
       <span class="tag blue">RustDesk</span>
@@ -501,11 +537,6 @@
 
   <!-- ============== COMING SOON ============== -->
   <h2 id="coming">Coming <em>soon</em></h2>
-
-  <div class="coming-soon">
-    <h3>/newemailaccount — self-service mailbox creation</h3>
-    <p>Form-based UI to spin up new mailboxes on any of your existing mail domains, without SSH. Lists domains via Hestia API, adds mailbox, generates a <code>.mobileconfig</code> profile on the fly. Phase 1: existing-domain mailboxes only. Phase 2: add new domains end-to-end (DNS via Cloudflare API, Let's Encrypt cert auto-extension).</p>
-  </div>
 
   <div class="coming-soon">
     <h3>webmail.jonathanellis.dev — Roundcube on Coolify</h3>
