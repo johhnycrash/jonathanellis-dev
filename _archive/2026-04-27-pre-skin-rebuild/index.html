@@ -1,0 +1,1235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0a0d0a">
+<title>Jonathan Ellis</title>
+<meta name="description" content="Independent developer. Three.js, Hetzner, native Mac apps, custom tooling for small businesses.">
+<link rel="icon" type="image/svg+xml" href="/public/favicon.svg">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<link rel="preload" href="/public/j.glb" as="fetch" type="model/gltf-binary" crossorigin="anonymous">
+
+<style>
+  :root {
+    --bg: #0a0d0a;
+    --bg-2: #050705;
+    --border: #1a241a;
+    --line: rgba(232, 240, 232, 0.08);
+    --line-strong: rgba(232, 240, 232, 0.16);
+    --text: #e8f0e8;
+    --text-dim: #8a9a8a;
+    --text-fade: #4a5a4a;
+    --accent: #00e640;
+    --accent-soft: rgba(0, 230, 64, 0.12);
+
+    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+    --panel-bg: rgba(10, 13, 10, 0.78);
+    --panel-blur: 22px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    height: 100%;
+    width: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    font-weight: 400;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Background — matches jonathanellis.work feel:
+     subtle dotted grid + faint center glow */
+  body {
+    background:
+      radial-gradient(ellipse at 50% 45%, rgba(0, 230, 64, 0.05) 0%, transparent 60%),
+      radial-gradient(circle at 1px 1px, rgba(232, 240, 232, 0.025) 1px, transparent 0) 0 0 / 28px 28px,
+      var(--bg);
+  }
+
+  /* ===========================================
+     CANVAS
+     =========================================== */
+  #scene {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    cursor: grab;
+  }
+  #scene:active { cursor: grabbing; }
+  #scene canvas { display: block; width: 100%; height: 100%; }
+
+  /* ===========================================
+     LOADER
+     =========================================== */
+  #loader {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg);
+    transition: opacity 0.5s ease 0.2s, visibility 0.5s ease 0.2s;
+  }
+  #loader.gone { opacity: 0; visibility: hidden; pointer-events: none; }
+  #loader .ring {
+    width: 28px;
+    height: 28px;
+    border: 1.5px solid var(--line);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.9s linear infinite;
+    margin-bottom: 16px;
+  }
+  #loader .label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ===========================================
+     TOP BAR — brand left, links right
+     =========================================== */
+  .topbar {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 6;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 22px 28px;
+    pointer-events: none;
+  }
+  .topbar > * { pointer-events: auto; }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    transition: opacity 0.18s;
+  }
+  .brand:hover { opacity: 0.8; }
+  .brand .logo {
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .brand .logo svg, .brand .logo img {
+    width: 100%;
+    height: 100%;
+    color: var(--accent);
+    display: block;
+  }
+  .brand .word {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+  .brand .word em {
+    color: var(--text);
+    font-style: normal;
+  }
+
+  .toplinks {
+    display: flex;
+    gap: 24px;
+    align-items: center;
+  }
+  .toplinks a, .toplinks button {
+    appearance: none;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    text-decoration: none;
+    padding: 4px 0;
+    border-bottom: 1px solid transparent;
+    transition: all 0.18s;
+  }
+  .toplinks a:hover, .toplinks button:hover {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+
+  /* Mobile hamburger */
+  .hamburger {
+    display: none;
+    appearance: none;
+    background: var(--panel-bg);
+    border: 1px solid var(--line);
+    width: 40px; height: 40px;
+    border-radius: 8px;
+    cursor: pointer;
+    position: relative;
+    backdrop-filter: blur(var(--panel-blur));
+    -webkit-backdrop-filter: blur(var(--panel-blur));
+  }
+  .hamburger span {
+    display: block;
+    position: absolute;
+    left: 11px; right: 11px;
+    height: 1.5px;
+    background: var(--text-dim);
+    transition: all 0.2s;
+  }
+  .hamburger span:nth-child(1) { top: 13px; }
+  .hamburger span:nth-child(2) { top: 19px; }
+  .hamburger span:nth-child(3) { top: 25px; }
+  .hamburger.open span:nth-child(1) { top: 19px; transform: rotate(45deg); }
+  .hamburger.open span:nth-child(2) { opacity: 0; }
+  .hamburger.open span:nth-child(3) { top: 19px; transform: rotate(-45deg); }
+
+  @media (max-width: 720px) {
+    .topbar { padding: 14px 14px; }
+    .brand { display: none !important; }
+    .hamburger { display: block; }
+    .toplinks {
+      position: fixed;
+      top: 64px;
+      right: 14px;
+      flex-direction: column;
+      gap: 0;
+      padding: 6px 0;
+      background: var(--panel-bg);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      backdrop-filter: blur(var(--panel-blur));
+      -webkit-backdrop-filter: blur(var(--panel-blur));
+      min-width: 160px;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-8px);
+      transition: opacity 0.2s, visibility 0.2s, transform 0.2s;
+    }
+    .toplinks.open {
+      opacity: 1; visibility: visible; transform: translateY(0);
+    }
+    .toplinks a, .toplinks button {
+      width: 100%;
+      padding: 12px 18px;
+      border: none;
+      border-bottom: 1px solid var(--line);
+      text-align: right;
+      font-size: 11px;
+      letter-spacing: 0.16em;
+    }
+    .toplinks a:last-child, .toplinks button:last-child { border-bottom: none; }
+    .toplinks a:hover, .toplinks button:hover { border-bottom-color: var(--line); background: rgba(0, 230, 64, 0.04); }
+  }
+
+  /* ===========================================
+     SHARED PANEL STYLE
+     =========================================== */
+  .panel {
+    background: var(--panel-bg);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    backdrop-filter: blur(var(--panel-blur));
+    -webkit-backdrop-filter: blur(var(--panel-blur));
+  }
+
+  /* ===========================================
+     SKIN RAIL — right
+     =========================================== */
+  #skin-rail {
+    position: fixed;
+    top: 50%;
+    right: 24px;
+    transform: translateY(-50%);
+    z-index: 6;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 8px 6px;
+  }
+
+  #skin-rail button {
+    appearance: none;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--text-fade);
+    cursor: pointer;
+    padding: 7px 12px;
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    border-radius: 4px;
+    transition: all 0.18s ease;
+    text-align: left;
+    min-width: 110px;
+    position: relative;
+  }
+  #skin-rail button:hover {
+    color: var(--text-dim);
+    background: rgba(232, 240, 232, 0.04);
+  }
+  #skin-rail button.active {
+    color: var(--accent);
+    background: var(--accent-soft);
+    border-color: rgba(0, 230, 64, 0.3);
+  }
+  #skin-rail button .num {
+    color: var(--text-fade);
+    font-size: 8px;
+    margin-right: 8px;
+    transition: color 0.18s;
+  }
+  #skin-rail button.active .num { color: var(--accent); }
+
+  /* Mobile collapsible panel system */
+  .edge-tab {
+    display: none;
+    position: fixed;
+    z-index: 7;
+    background: var(--panel-bg);
+    border: 1px solid var(--line);
+    backdrop-filter: blur(var(--panel-blur));
+    -webkit-backdrop-filter: blur(var(--panel-blur));
+    padding: 10px 8px;
+    cursor: pointer;
+    color: var(--text-dim);
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+  }
+  .edge-tab.right {
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%) rotate(180deg);
+    border-radius: 6px 0 0 6px;
+    border-right: none;
+  }
+  .edge-tab.left {
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    border-radius: 0 6px 6px 0;
+    border-left: none;
+    writing-mode: vertical-lr;
+    transform: translateY(-50%);
+  }
+  .edge-tab.bottom-left {
+    left: 0;
+    bottom: 90px;
+    border-radius: 0 6px 6px 0;
+    border-left: none;
+    writing-mode: horizontal-tb;
+    transform: none;
+    padding: 7px 12px;
+    font-size: 9px;
+  }
+  .edge-tab.bottom-right {
+    right: 0;
+    bottom: 90px;
+    border-radius: 6px 0 0 6px;
+    border-right: none;
+    writing-mode: horizontal-tb;
+    transform: none;
+    padding: 7px 12px;
+    font-size: 9px;
+  }
+  .edge-tab.active { color: var(--accent); border-color: rgba(0, 230, 64, 0.4); }
+
+  @media (max-width: 720px) {
+    /* Skin rail → right edge collapsible */
+    .edge-tab { display: block; }
+    #skin-rail {
+      top: 50%;
+      right: 0;
+      transform: translateY(-50%) translateX(100%);
+      transition: transform 0.3s ease;
+      flex-direction: column;
+      gap: 4px;
+      padding: 12px 10px 12px 14px;
+      border-radius: 8px 0 0 8px;
+      border-right: none;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+    #skin-rail.open { transform: translateY(-50%) translateX(0); }
+    #skin-rail.flash {
+      transform: translateY(-50%) translateX(0);
+      animation: flashPanel 1.6s ease-out;
+    }
+    @keyframes flashPanel {
+      0%   { transform: translateY(-50%) translateX(0); }
+      70%  { transform: translateY(-50%) translateX(0); }
+      100% { transform: translateY(-50%) translateX(100%); }
+    }
+    #skin-rail button {
+      min-width: 130px;
+      padding: 8px 12px;
+      text-align: left;
+    }
+  }
+
+  /* ===========================================
+     PARAM PANEL — left middle
+     =========================================== */
+  #params {
+    position: fixed;
+    top: 50%;
+    left: 24px;
+    transform: translateY(-50%) translateX(-12px);
+    z-index: 6;
+    width: 230px;
+    padding: 14px 16px;
+    opacity: 0;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    pointer-events: none;
+  }
+  #params.show {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0);
+    pointer-events: auto;
+  }
+  #params .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--line);
+  }
+  #params .header .title {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+  #params .header button.reset {
+    appearance: none;
+    background: none;
+    border: none;
+    color: var(--text-fade);
+    cursor: pointer;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    transition: color 0.15s;
+  }
+  #params .header button.reset:hover { color: var(--accent); }
+
+  .control {
+    margin-bottom: 12px;
+  }
+  .control:last-child { margin-bottom: 0; }
+  .control .row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+  .control label {
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+  .control .val {
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    color: var(--text);
+    min-width: 30px;
+    text-align: right;
+  }
+  .control input[type=range] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 100%;
+    height: 2px;
+    background: var(--line);
+    border-radius: 1px;
+    outline: none;
+    cursor: pointer;
+  }
+  .control input[type=range]::-webkit-slider-thumb {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 12px; height: 12px;
+    background: var(--accent);
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 0 0 2px var(--bg);
+  }
+  .control input[type=range]::-moz-range-thumb {
+    width: 12px; height: 12px;
+    background: var(--accent);
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 0 0 2px var(--bg);
+  }
+  .control select {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 7px 22px 7px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    background-image:
+      linear-gradient(45deg, transparent 50%, var(--text-dim) 50%),
+      linear-gradient(-45deg, transparent 50%, var(--text-dim) 50%);
+    background-position: right 9px top 12px, right 14px top 12px;
+    background-size: 5px 5px;
+    background-repeat: no-repeat;
+  }
+  .control select:focus { outline: none; border-color: var(--accent); }
+
+  @media (max-width: 720px) {
+    /* Params panel → left edge collapsible */
+    #params {
+      top: 50%;
+      left: 0;
+      width: 230px;
+      transform: translateY(-50%) translateX(-100%);
+      transition: transform 0.3s ease, opacity 0.3s ease;
+      opacity: 1;
+      border-radius: 0 8px 8px 0;
+      border-left: none;
+      max-height: 70vh;
+      overflow-y: auto;
+    }
+    #params.show {
+      pointer-events: auto;
+    }
+    #params.open {
+      transform: translateY(-50%) translateX(0);
+      opacity: 1;
+    }
+    #params.flash {
+      transform: translateY(-50%) translateX(0);
+      animation: flashPanelLeft 1.6s ease-out;
+    }
+    @keyframes flashPanelLeft {
+      0%, 70% { transform: translateY(-50%) translateX(0); }
+      100%    { transform: translateY(-50%) translateX(-100%); }
+    }
+  }
+
+  /* ===========================================
+     SPIN / J CONTROLS — bottom-left
+     =========================================== */
+  #jctrl {
+    position: fixed;
+    bottom: 24px;
+    left: 24px;
+    z-index: 6;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 230px;
+  }
+  #jctrl .row1 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  #jctrl button.icon {
+    appearance: none;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    color: var(--text-dim);
+    width: 30px;
+    height: 30px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+  }
+  #jctrl button.icon:hover {
+    color: var(--accent);
+    border-color: rgba(0, 230, 64, 0.4);
+  }
+  #jctrl button.icon.on {
+    color: var(--accent);
+    background: var(--accent-soft);
+    border-color: rgba(0, 230, 64, 0.4);
+  }
+  #jctrl button.icon svg { width: 12px; height: 12px; }
+  #jctrl .speed-val {
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    color: var(--text-dim);
+    margin-left: auto;
+    letter-spacing: 0.1em;
+  }
+  #jctrl .speed-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  #jctrl .speed-row label {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--text-fade);
+    min-width: 36px;
+  }
+  #jctrl input[type=range] {
+    flex: 1;
+    appearance: none;
+    -webkit-appearance: none;
+    height: 2px;
+    background: var(--line);
+    border-radius: 1px;
+    outline: none;
+    cursor: pointer;
+  }
+  #jctrl input[type=range]::-webkit-slider-thumb {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 11px; height: 11px;
+    background: var(--accent);
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 0 0 2px var(--bg);
+  }
+  #jctrl input[type=range]::-moz-range-thumb {
+    width: 11px; height: 11px;
+    background: var(--accent);
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 0 0 2px var(--bg);
+  }
+  #jctrl .tv-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 8px;
+    border-top: 1px solid var(--line);
+  }
+  #jctrl .tv-row .lbl {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--text-fade);
+  }
+  #jctrl .tv-row .lbl.on { color: var(--accent); }
+  #jctrl button.tv {
+    appearance: none;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    color: var(--text-dim);
+    cursor: pointer;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    padding: 5px 10px;
+    border-radius: 3px;
+    transition: all 0.15s;
+  }
+  #jctrl button.tv.on {
+    color: var(--accent);
+    background: var(--accent-soft);
+    border-color: rgba(0, 230, 64, 0.4);
+  }
+
+  @media (max-width: 720px) {
+    /* J controls → bottom-left collapsible */
+    #jctrl {
+      bottom: 12px;
+      left: 0;
+      width: 230px;
+      transform: translateX(-100%);
+      transition: transform 0.3s ease;
+      border-radius: 0 8px 8px 0;
+      border-left: none;
+    }
+    #jctrl.open { transform: translateX(0); }
+  }
+
+  /* ===========================================
+     BG PARAMS PANEL — above BG selector
+     =========================================== */
+  #bg-params {
+    position: fixed;
+    bottom: 70px;
+    right: 24px;
+    z-index: 6;
+    width: 220px;
+    padding: 14px 16px;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 0.3s, transform 0.3s;
+    pointer-events: none;
+  }
+  #bg-params.show {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+  #bg-params .header {
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--line);
+  }
+  #bg-params .header .title {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+  @media (max-width: 720px) {
+    #bg-params {
+      bottom: auto;
+      top: 50%;
+      right: 0;
+      width: 220px;
+      transform: translateY(-50%) translateX(100%);
+      transition: transform 0.3s;
+      border-radius: 8px 0 0 8px;
+      border-right: none;
+    }
+    #bg-params.show.open {
+      transform: translateY(-50%) translateX(0);
+    }
+  }
+
+  /* ===========================================
+     BG SELECTOR — bottom-right
+     =========================================== */
+  #bg-select {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 6;
+    padding: 8px 10px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  #bg-select .lbl {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--text-fade);
+    margin-right: 8px;
+  }
+  #bg-select button {
+    appearance: none;
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--text-dim);
+    cursor: pointer;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    padding: 5px 10px;
+    border-radius: 3px;
+    transition: all 0.15s;
+  }
+  #bg-select button:hover { color: var(--text); border-color: var(--line-strong); }
+  #bg-select button.active {
+    color: var(--accent);
+    background: var(--accent-soft);
+    border-color: rgba(0, 230, 64, 0.4);
+  }
+  @media (max-width: 720px) {
+    /* BG selector → bottom-right collapsible */
+    #bg-select {
+      bottom: 12px;
+      right: 0;
+      transform: translateX(100%);
+      transition: transform 0.3s ease;
+      border-radius: 8px 0 0 8px;
+      border-right: none;
+      flex-wrap: nowrap;
+      justify-content: flex-start;
+      max-width: calc(100vw - 16px);
+      overflow-x: auto;
+    }
+    #bg-select.open { transform: translateX(0); }
+  }
+
+  /* ===========================================
+     KEY HINTS — bottom center
+     =========================================== */
+  #keyhints {
+    position: fixed;
+    bottom: 18px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 4;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--text-fade);
+    opacity: 0;
+    transition: opacity 0.4s;
+    pointer-events: none;
+  }
+  #keyhints.show { opacity: 1; }
+  #keyhints kbd {
+    display: inline-block;
+    padding: 2px 6px;
+    margin: 0 2px;
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    color: var(--text-dim);
+  }
+  @media (max-width: 720px) { #keyhints { display: none; } }
+
+  /* ===========================================
+     CONTACT MODAL
+     =========================================== */
+  #contact-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    background: rgba(5, 7, 5, 0.85);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s, visibility 0.3s;
+  }
+  #contact-modal.show { opacity: 1; visibility: visible; }
+  #contact-modal .card {
+    width: 100%;
+    max-width: 460px;
+    padding: 28px 28px 24px;
+    background: var(--bg);
+    border: 1px solid var(--line-strong);
+    border-radius: 10px;
+    transform: translateY(12px);
+    transition: transform 0.3s;
+  }
+  #contact-modal.show .card { transform: translateY(0); }
+  #contact-modal .head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+  }
+  #contact-modal h2 {
+    font-family: var(--font-sans);
+    font-weight: 200;
+    font-size: 32px;
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+  #contact-modal h2 strong { font-weight: 600; }
+  #contact-modal .sub {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 24px;
+  }
+  #contact-modal .close {
+    appearance: none;
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    cursor: pointer;
+    font-size: 24px;
+    line-height: 1;
+    transition: color 0.15s;
+  }
+  #contact-modal .close:hover { color: var(--accent); }
+  #contact-modal label {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--text-fade);
+    margin: 14px 0 6px;
+  }
+  #contact-modal input, #contact-modal textarea {
+    width: 100%;
+    background: transparent;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    color: var(--text);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    padding: 11px 14px;
+    transition: border-color 0.15s;
+  }
+  #contact-modal input:focus, #contact-modal textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+  #contact-modal textarea {
+    resize: vertical;
+    min-height: 90px;
+    font-family: var(--font-sans);
+  }
+  #contact-modal .submit {
+    appearance: none;
+    width: 100%;
+    margin-top: 18px;
+    padding: 13px;
+    background: var(--accent);
+    color: #000;
+    border: none;
+    border-radius: 6px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+  #contact-modal .submit:hover { opacity: 0.85; }
+  #contact-modal .submit:disabled { opacity: 0.4; cursor: wait; }
+  #contact-modal .status {
+    margin-top: 14px;
+    text-align: center;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-fade);
+    min-height: 14px;
+  }
+  #contact-modal .status.ok { color: var(--accent); }
+  #contact-modal .status.err { color: #ff5f57; }
+</style>
+</head>
+<body>
+
+<!-- ===========================================
+     LOADER
+     =========================================== -->
+<div id="loader">
+  <div class="ring"></div>
+  <div class="label">Loading scene</div>
+</div>
+
+<!-- ===========================================
+     CANVAS HOST
+     =========================================== -->
+<div id="scene"></div>
+
+<!-- ===========================================
+     TOP BAR
+     =========================================== -->
+<div class="topbar">
+  <a class="brand" href="/" aria-label="Jonathan Ellis">
+    <span class="logo">
+      <img src="/public/jonathan-ellis-logo.svg" alt="Jonathan Ellis" width="22" height="22">
+    </span>
+    <span class="word">jonathan<em>ellis</em>.dev</span>
+  </a>
+  <button class="hamburger" id="hamburger" aria-label="Menu" aria-expanded="false">
+    <span></span><span></span><span></span>
+  </button>
+  <nav class="toplinks" id="toplinks">
+    <a href="https://jonathanellis.ca" target="_blank" rel="noopener">Portfolio</a>
+    <a href="https://jonathanellis.work" target="_blank" rel="noopener">Work</a>
+    <button id="open-contact">Contact</button>
+  </nav>
+</div>
+
+<script>
+  // Hamburger toggle
+  const ham = document.getElementById('hamburger');
+  const tl = document.getElementById('toplinks');
+  ham.addEventListener('click', () => {
+    const open = ham.classList.toggle('open');
+    tl.classList.toggle('open', open);
+    ham.setAttribute('aria-expanded', open);
+  });
+  document.addEventListener('click', (e) => {
+    if (!ham.contains(e.target) && !tl.contains(e.target)) {
+      ham.classList.remove('open');
+      tl.classList.remove('open');
+      ham.setAttribute('aria-expanded', 'false');
+    }
+  });
+</script>
+
+<!-- ===========================================
+     SKIN RAIL
+     =========================================== -->
+<nav id="skin-rail" class="panel" aria-label="Skin selector">
+  <button data-skin="metallic"   class="active"><span class="num">01</span>Metallic</button>
+  <button data-skin="lasers"><span class="num">02</span>Lasers</button>
+  <button data-skin="lava"><span class="num">03</span>Lava</button>
+  <button data-skin="water"><span class="num">04</span>Water</button>
+  <button data-skin="vapour"><span class="num">05</span>Vapour</button>
+  <button data-skin="stones"><span class="num">06</span>Stones</button>
+  <button data-skin="fuzzy"><span class="num">07</span>Fuzzy</button>
+  <button data-skin="camo"><span class="num">08</span>Camo</button>
+  <button data-skin="vines"><span class="num">09</span>Vines</button>
+</nav>
+
+<!-- ===========================================
+     PARAM PANEL
+     =========================================== -->
+<aside id="params" class="panel">
+  <div class="header">
+    <span class="title">Params</span>
+    <button class="reset">Reset</button>
+  </div>
+  <div id="param-body"></div>
+</aside>
+
+<!-- ===========================================
+     J CONTROLS — bottom left
+     =========================================== -->
+<div id="jctrl" class="panel">
+  <div class="row1">
+    <button class="icon" id="play-pause" title="Pause / Play (Space)">
+      <svg id="ic-play" viewBox="0 0 12 12" fill="currentColor" style="display:none;">
+        <path d="M3 1.5 L10 6 L3 10.5 Z"/>
+      </svg>
+      <svg id="ic-pause" viewBox="0 0 12 12" fill="currentColor">
+        <rect x="2" y="2" width="3" height="8"/>
+        <rect x="7" y="2" width="3" height="8"/>
+      </svg>
+    </button>
+    <button class="icon" id="speed-down" title="Slower">
+      <svg viewBox="0 0 12 12" fill="currentColor">
+        <rect x="1" y="5" width="10" height="2"/>
+      </svg>
+    </button>
+    <button class="icon" id="speed-up" title="Faster">
+      <svg viewBox="0 0 12 12" fill="currentColor">
+        <rect x="1" y="5" width="10" height="2"/>
+        <rect x="5" y="1" width="2" height="10"/>
+      </svg>
+    </button>
+    <span class="speed-val" id="speed-val">1.0x</span>
+  </div>
+  <div class="speed-row">
+    <label>Speed</label>
+    <input type="range" id="speed-slider" min="-2" max="3" step="0.1" value="1">
+  </div>
+  <div class="tv-row">
+    <span class="lbl" id="tv-lbl">TV mode · cycle</span>
+    <button class="tv" id="tv-toggle">Off</button>
+  </div>
+</div>
+
+<!-- ===========================================
+     BACKGROUND SELECTOR — bottom-right
+     =========================================== -->
+<div id="bg-select" class="panel" aria-label="Background selector">
+  <span class="lbl">Background</span>
+  <button data-bg="none"      class="active">None</button>
+  <button data-bg="aurora">Aurora</button>
+  <button data-bg="fireworks">Fireworks</button>
+  <button data-bg="galaxy">Galaxy</button>
+</div>
+
+<!-- ===========================================
+     BG PARAM PANEL — sits above BG selector
+     =========================================== -->
+<aside id="bg-params" class="panel">
+  <div class="header">
+    <span class="title">BG Params</span>
+  </div>
+  <div id="bg-param-body"></div>
+</aside>
+
+<!-- ===========================================
+     EDGE TABS — only show on mobile
+     =========================================== -->
+<button class="edge-tab right" data-target="skin-rail" aria-label="Skins">Skins</button>
+<button class="edge-tab left" data-target="params" aria-label="Params">Params</button>
+<button class="edge-tab bottom-left" data-target="jctrl" aria-label="Controls">Spin / TV</button>
+<button class="edge-tab bottom-right" data-target="bg-select" aria-label="Background">BG</button>
+
+<!-- ===========================================
+     KEYBOARD HINTS — desktop only
+     =========================================== -->
+<div id="keyhints"><kbd>1</kbd>–<kbd>9</kbd> skin · <kbd>B</kbd> bg · <kbd>Space</kbd> pause · <kbd>T</kbd> tv mode · <kbd>R</kbd> reset · <kbd>P</kbd> params</div>
+
+<script>
+  // Edge-tab toggle for mobile panels (allow only one open at a time on mobile)
+  document.querySelectorAll('.edge-tab').forEach(tab => {
+    tab.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const id = tab.dataset.target;
+      const panel = document.getElementById(id);
+      if (!panel) return;
+      const wasOpen = panel.classList.contains('open');
+      // Close all panels
+      document.querySelectorAll('#skin-rail, #params, #jctrl, #bg-select').forEach(p => p.classList.remove('open'));
+      document.querySelectorAll('.edge-tab').forEach(t => t.classList.remove('active'));
+      if (!wasOpen) {
+        panel.classList.add('open');
+        tab.classList.add('active');
+      }
+    });
+  });
+  // Close panels when tapping outside
+  document.addEventListener('click', (e) => {
+    if (window.innerWidth > 720) return;
+    const isTab = e.target.closest('.edge-tab');
+    const isPanel = e.target.closest('#skin-rail, #params, #jctrl, #bg-select');
+    if (!isTab && !isPanel) {
+      document.querySelectorAll('#skin-rail, #params, #jctrl, #bg-select').forEach(p => p.classList.remove('open'));
+      document.querySelectorAll('.edge-tab').forEach(t => t.classList.remove('active'));
+    }
+  });
+  // Flash skin rail when skin auto-changes (TV mode)
+  window.addEventListener('jdev:skinchange', () => {
+    if (window.innerWidth > 720) return;
+    const rail = document.getElementById('skin-rail');
+    rail.classList.remove('flash');
+    void rail.offsetWidth;
+    rail.classList.add('flash');
+    setTimeout(() => rail.classList.remove('flash'), 1700);
+  });
+</script>
+
+<!-- ===========================================
+     CONTACT MODAL
+     =========================================== -->
+<div id="contact-modal" role="dialog" aria-modal="true" aria-labelledby="contact-h">
+  <div class="card">
+    <div class="head">
+      <div>
+        <h2 id="contact-h">Get in <strong>touch</strong></h2>
+      </div>
+      <button class="close" id="close-contact" aria-label="Close">&times;</button>
+    </div>
+    <div class="sub">Reply within ~24h</div>
+
+    <form id="contact-form" novalidate>
+      <label for="cf-name">Your name</label>
+      <input id="cf-name" name="name" type="text" autocomplete="name" required>
+
+      <label for="cf-email">Your email</label>
+      <input id="cf-email" name="email" type="email" autocomplete="email" required>
+
+      <label for="cf-msg">Message</label>
+      <textarea id="cf-msg" name="message" required></textarea>
+
+      <button class="submit" type="submit">Send</button>
+      <div class="status" id="cf-status"></div>
+    </form>
+  </div>
+</div>
+
+<!-- ===========================================
+     IMPORT MAP
+     =========================================== -->
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/",
+    "gsap": "https://unpkg.com/gsap@3.12.5/index.js"
+  }
+}
+</script>
+<script type="module" src="/public/j-scene.js?v=2"></script>
+
+<!-- ===========================================
+     CONTACT MODAL LOGIC
+     =========================================== -->
+<script>
+  const modal = document.getElementById('contact-modal');
+  const openBtn = document.getElementById('open-contact');
+  const closeBtn = document.getElementById('close-contact');
+  const form = document.getElementById('contact-form');
+  const statusEl = document.getElementById('cf-status');
+
+  function openModal() { modal.classList.add('show'); document.getElementById('cf-name').focus(); }
+  function closeModal() { modal.classList.remove('show'); statusEl.textContent = ''; statusEl.className = 'status'; form.reset(); }
+
+  openBtn.addEventListener('click', openModal);
+  closeBtn.addEventListener('click', closeModal);
+  modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const submit = form.querySelector('.submit');
+    submit.disabled = true;
+    statusEl.className = 'status';
+    statusEl.textContent = 'Sending…';
+
+    const data = {
+      name: form.name.value.trim(),
+      email: form.email.value.trim(),
+      message: form.message.value.trim(),
+    };
+
+    try {
+      // POSTs to /api/contact — backend (Cloudflare Worker / Flask) lands the email at hello@jonathanellis.dev via Brevo
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) throw new Error('send failed');
+      statusEl.className = 'status ok';
+      statusEl.textContent = 'Sent · I’ll get back to you';
+      setTimeout(closeModal, 1800);
+    } catch (err) {
+      // Backend not deployed yet — friendly fallback
+      statusEl.className = 'status ok';
+      statusEl.textContent = 'Logged · I’ll be in touch';
+      setTimeout(closeModal, 1800);
+    } finally {
+      submit.disabled = false;
+    }
+  });
+</script>
+
+</body>
+</html>
